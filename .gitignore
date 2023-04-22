@@ -1,4 +1,4 @@
-/books
-*.cmi
-*cmo
-*.grc
+lexer/*.cmi
+lexer/*.cmo
+lexer/*.ml
+examples
