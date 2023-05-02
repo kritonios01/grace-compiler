@@ -1,46 +1,48 @@
 {
-type token =
-  | T_and 
-  | T_assign 
-  | T_char 
-  | T_colon 
-  | T_comma 
-  | T_constc 
-  | T_consti 
-  | T_consts
-  | T_div 
-  | T_do 
-  | T_else 
-  | T_eof
-  | T_eq 
-  | T_fun 
-  | T_greater 
-  | T_greatereq 
-  | T_hash 
-  | T_id 
-  | T_if 
-  | T_int 
-  | T_less 
-  | T_lesseq 
-  | T_lbracket 
-  | T_lcbracket 
-  | T_lparen 
-  | T_minus 
-  | T_mod 
-  | T_mul 
-  | T_not 
-  | T_nothing 
-  | T_or 
-  | T_plus 
-  | T_rbracket 
-  | T_rcbracket 
-  | T_ref 
-  | T_return 
-  | T_rparen 
-  | T_semicolon 
-  | T_then 
-  | T_var 
-  | T_while 
+  type token =
+    | T_and 
+    | T_assign 
+    | T_char 
+    | T_colon 
+    | T_comma 
+    | T_constc 
+    | T_consti 
+    | T_consts
+    | T_div 
+    | T_do 
+    | T_else 
+    | T_eof
+    | T_eq 
+    | T_fun 
+    | T_greater 
+    | T_greatereq 
+    | T_hash 
+    | T_id 
+    | T_if 
+    | T_int 
+    | T_less 
+    | T_lesseq 
+    | T_lbracket 
+    | T_lcbracket 
+    | T_lparen 
+    | T_minus 
+    | T_mod 
+    | T_mul 
+    | T_not 
+    | T_nothing 
+    | T_or 
+    | T_plus 
+    | T_rbracket 
+    | T_rcbracket 
+    | T_ref 
+    | T_return 
+    | T_rparen 
+    | T_semicolon 
+    | T_then 
+    | T_var 
+    | T_while 
+
+  let num_lines = ref 0
 }
 
 (* definitions of useful regexps *)
@@ -51,9 +53,9 @@ let hex            = digit | ['A'-'F'] | ['a'-'f']
 let escseq         = '\\'  ('n' | 't' | 'r' | '0' | '\\' | '\'' | '\"' | ('x' hex hex))
 
 let letter = ['a'-'z' 'A'-'Z']
-let white  = [' ' '\t' '\n' '\r']
+let white  = [' ' '\t' '\r']
 
-
+(* NOTE: Counting lines works but probably not when there are multiline comments *)
 rule lexer = parse
   (* keywords *)
   | "and"     { T_and     }
@@ -108,6 +110,7 @@ rule lexer = parse
   | "<-"      { T_assign    } 
 
   (* to be ignored by parser: white chars and comments *)
+  | '\n'      { incr num_lines; lexer lexbuf}
   | white+    { lexer lexbuf    }
   | '$'       { comment lexbuf  }
   | "$$"      { mcomment lexbuf }
@@ -119,7 +122,7 @@ rule lexer = parse
 
 (* comment entrypoint catches single line comments. Triggered after a $ is detected *)
 and comment = shortest
-  | [^'\n']* '\n'       { Printf.eprintf "SingleLineComment\n"; lexer lexbuf                    }
+  | [^'\n']* '\n'       { incr num_lines; Printf.eprintf "SingleLineComment\n"; lexer lexbuf                    }
   | _* '$' _*           { Printf.eprintf "Error on single line comment: Dual $\n"; lexer lexbuf }
 
 (* mcomment entrypoint catches multi line comments. Triggered after a $$ is detected *)
@@ -180,5 +183,7 @@ and mcomment = parse
       let token = lexer lexbuf in
       Printf.printf "token = %s, lexeme = \"%s\"\n" (string_of_token token) (Lexing.lexeme lexbuf);
       if token <> T_eof then loop () in
-    loop ()
+    loop ();
+
+    Printf.printf "%d lines" !num_lines
 }
