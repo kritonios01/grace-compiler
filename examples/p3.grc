@@ -1,0 +1,20 @@
+fun a(ref m : int[19]; ref e, boo, c : char[14]) : nothing
+fun j(h : char[][26]) : int
+fun foo(ref k : int[][27][38]) : int
+
+{
+
+}
+
+
+{
+
+}
+
+fun baz(ref foo, foo, m : char[]; e, bar : char[40]) : char;
+var b, boo : char;
+
+{
+  c <- + 9;
+  while 1 > 42 do main <- '\'';
+}

@@ -1,0 +1,420 @@
+State 0:
+## Known stack suffix:
+##
+## LR(1) items:
+program' -> . program [ # ]
+## Transitions:
+-- On T_print shift to state 1
+-- On T_let shift to state 14
+-- On T_if shift to state 18
+-- On T_for shift to state 21
+-- On T_begin shift to state 24
+-- On stmt_list shift to state 31
+-- On stmt shift to state 27
+-- On program shift to state 33
+## Reductions:
+-- On T_eof
+--   reduce production stmt_list ->
+
+State 1:
+## Known stack suffix:
+## T_print
+## LR(1) items:
+stmt -> T_print . expr [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+-- On T_var shift to state 2
+-- On T_lparen shift to state 3
+-- On T_const shift to state 4
+-- On expr shift to state 13
+## Reductions:
+
+State 2:
+## Known stack suffix:
+## T_var
+## LR(1) items:
+expr -> T_var . [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+## Transitions:
+## Reductions:
+-- On T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin
+--   reduce production expr -> T_var
+
+State 3:
+## Known stack suffix:
+## T_lparen
+## LR(1) items:
+expr -> T_lparen . expr T_rparen [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+## Transitions:
+-- On T_var shift to state 2
+-- On T_lparen shift to state 3
+-- On T_const shift to state 4
+-- On expr shift to state 5
+## Reductions:
+
+State 4:
+## Known stack suffix:
+## T_const
+## LR(1) items:
+expr -> T_const . [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+## Transitions:
+## Reductions:
+-- On T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin
+--   reduce production expr -> T_const
+
+State 5:
+## Known stack suffix:
+## T_lparen expr
+## LR(1) items:
+expr -> T_lparen expr . T_rparen [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+expr -> expr . T_plus expr [ T_times T_rparen T_plus T_minus ]
+expr -> expr . T_minus expr [ T_times T_rparen T_plus T_minus ]
+expr -> expr . T_times expr [ T_times T_rparen T_plus T_minus ]
+## Transitions:
+-- On T_times shift to state 6
+-- On T_rparen shift to state 8
+-- On T_plus shift to state 9
+-- On T_minus shift to state 11
+## Reductions:
+
+State 6:
+## Known stack suffix:
+## expr T_times
+## LR(1) items:
+expr -> expr T_times . expr [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+## Transitions:
+-- On T_var shift to state 2
+-- On T_lparen shift to state 3
+-- On T_const shift to state 4
+-- On expr shift to state 7
+## Reductions:
+
+State 7:
+## Known stack suffix:
+## expr T_times expr
+## LR(1) items:
+expr -> expr . T_plus expr [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+expr -> expr . T_minus expr [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+expr -> expr . T_times expr [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+expr -> expr T_times expr . [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+## Transitions:
+## Reductions:
+-- On T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin
+--   reduce production expr -> expr T_times expr
+
+State 8:
+## Known stack suffix:
+## T_lparen expr T_rparen
+## LR(1) items:
+expr -> T_lparen expr T_rparen . [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+## Transitions:
+## Reductions:
+-- On T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin
+--   reduce production expr -> T_lparen expr T_rparen
+
+State 9:
+## Known stack suffix:
+## expr T_plus
+## LR(1) items:
+expr -> expr T_plus . expr [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+## Transitions:
+-- On T_var shift to state 2
+-- On T_lparen shift to state 3
+-- On T_const shift to state 4
+-- On expr shift to state 10
+## Reductions:
+
+State 10:
+## Known stack suffix:
+## expr T_plus expr
+## LR(1) items:
+expr -> expr . T_plus expr [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+expr -> expr T_plus expr . [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+expr -> expr . T_minus expr [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+expr -> expr . T_times expr [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+## Transitions:
+-- On T_times shift to state 6
+## Reductions:
+-- On T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin
+--   reduce production expr -> expr T_plus expr
+
+State 11:
+## Known stack suffix:
+## expr T_minus
+## LR(1) items:
+expr -> expr T_minus . expr [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+## Transitions:
+-- On T_var shift to state 2
+-- On T_lparen shift to state 3
+-- On T_const shift to state 4
+-- On expr shift to state 12
+## Reductions:
+
+State 12:
+## Known stack suffix:
+## expr T_minus expr
+## LR(1) items:
+expr -> expr . T_plus expr [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+expr -> expr . T_minus expr [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+expr -> expr T_minus expr . [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+expr -> expr . T_times expr [ T_times T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin ]
+## Transitions:
+-- On T_times shift to state 6
+## Reductions:
+-- On T_then T_rparen T_print T_plus T_minus T_let T_if T_for T_eof T_end T_do T_begin
+--   reduce production expr -> expr T_minus expr
+
+State 13:
+## Known stack suffix:
+## T_print expr
+## LR(1) items:
+expr -> expr . T_plus expr [ T_times T_print T_plus T_minus T_let T_if T_for T_eof T_end T_begin ]
+expr -> expr . T_minus expr [ T_times T_print T_plus T_minus T_let T_if T_for T_eof T_end T_begin ]
+expr -> expr . T_times expr [ T_times T_print T_plus T_minus T_let T_if T_for T_eof T_end T_begin ]
+stmt -> T_print expr . [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+-- On T_times shift to state 6
+-- On T_plus shift to state 9
+-- On T_minus shift to state 11
+## Reductions:
+-- On T_print T_let T_if T_for T_eof T_end T_begin
+--   reduce production stmt -> T_print expr
+
+State 14:
+## Known stack suffix:
+## T_let
+## LR(1) items:
+stmt -> T_let . T_var T_eq expr [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+-- On T_var shift to state 15
+## Reductions:
+
+State 15:
+## Known stack suffix:
+## T_let T_var
+## LR(1) items:
+stmt -> T_let T_var . T_eq expr [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+-- On T_eq shift to state 16
+## Reductions:
+
+State 16:
+## Known stack suffix:
+## T_let T_var T_eq
+## LR(1) items:
+stmt -> T_let T_var T_eq . expr [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+-- On T_var shift to state 2
+-- On T_lparen shift to state 3
+-- On T_const shift to state 4
+-- On expr shift to state 17
+## Reductions:
+
+State 17:
+## Known stack suffix:
+## T_let T_var T_eq expr
+## LR(1) items:
+expr -> expr . T_plus expr [ T_times T_print T_plus T_minus T_let T_if T_for T_eof T_end T_begin ]
+expr -> expr . T_minus expr [ T_times T_print T_plus T_minus T_let T_if T_for T_eof T_end T_begin ]
+expr -> expr . T_times expr [ T_times T_print T_plus T_minus T_let T_if T_for T_eof T_end T_begin ]
+stmt -> T_let T_var T_eq expr . [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+-- On T_times shift to state 6
+-- On T_plus shift to state 9
+-- On T_minus shift to state 11
+## Reductions:
+-- On T_print T_let T_if T_for T_eof T_end T_begin
+--   reduce production stmt -> T_let T_var T_eq expr
+
+State 18:
+## Known stack suffix:
+## T_if
+## LR(1) items:
+stmt -> T_if . expr T_then stmt [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+-- On T_var shift to state 2
+-- On T_lparen shift to state 3
+-- On T_const shift to state 4
+-- On expr shift to state 19
+## Reductions:
+
+State 19:
+## Known stack suffix:
+## T_if expr
+## LR(1) items:
+expr -> expr . T_plus expr [ T_times T_then T_plus T_minus ]
+expr -> expr . T_minus expr [ T_times T_then T_plus T_minus ]
+expr -> expr . T_times expr [ T_times T_then T_plus T_minus ]
+stmt -> T_if expr . T_then stmt [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+-- On T_times shift to state 6
+-- On T_then shift to state 20
+-- On T_plus shift to state 9
+-- On T_minus shift to state 11
+## Reductions:
+
+State 20:
+## Known stack suffix:
+## T_if expr T_then
+## LR(1) items:
+stmt -> T_if expr T_then . stmt [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+-- On T_print shift to state 1
+-- On T_let shift to state 14
+-- On T_if shift to state 18
+-- On T_for shift to state 21
+-- On T_begin shift to state 24
+-- On stmt shift to state 30
+## Reductions:
+
+State 21:
+## Known stack suffix:
+## T_for
+## LR(1) items:
+stmt -> T_for . expr T_do stmt [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+-- On T_var shift to state 2
+-- On T_lparen shift to state 3
+-- On T_const shift to state 4
+-- On expr shift to state 22
+## Reductions:
+
+State 22:
+## Known stack suffix:
+## T_for expr
+## LR(1) items:
+expr -> expr . T_plus expr [ T_times T_plus T_minus T_do ]
+expr -> expr . T_minus expr [ T_times T_plus T_minus T_do ]
+expr -> expr . T_times expr [ T_times T_plus T_minus T_do ]
+stmt -> T_for expr . T_do stmt [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+-- On T_times shift to state 6
+-- On T_plus shift to state 9
+-- On T_minus shift to state 11
+-- On T_do shift to state 23
+## Reductions:
+
+State 23:
+## Known stack suffix:
+## T_for expr T_do
+## LR(1) items:
+stmt -> T_for expr T_do . stmt [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+-- On T_print shift to state 1
+-- On T_let shift to state 14
+-- On T_if shift to state 18
+-- On T_for shift to state 21
+-- On T_begin shift to state 24
+-- On stmt shift to state 29
+## Reductions:
+
+State 24:
+## Known stack suffix:
+## T_begin
+## LR(1) items:
+stmt -> T_begin . stmt_list T_end [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+-- On T_print shift to state 1
+-- On T_let shift to state 14
+-- On T_if shift to state 18
+-- On T_for shift to state 21
+-- On T_begin shift to state 24
+-- On stmt_list shift to state 25
+-- On stmt shift to state 27
+## Reductions:
+-- On T_end
+--   reduce production stmt_list ->
+
+State 25:
+## Known stack suffix:
+## T_begin stmt_list
+## LR(1) items:
+stmt -> T_begin stmt_list . T_end [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+-- On T_end shift to state 26
+## Reductions:
+
+State 26:
+## Known stack suffix:
+## T_begin stmt_list T_end
+## LR(1) items:
+stmt -> T_begin stmt_list T_end . [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+## Reductions:
+-- On T_print T_let T_if T_for T_eof T_end T_begin
+--   reduce production stmt -> T_begin stmt_list T_end
+
+State 27:
+## Known stack suffix:
+## stmt
+## LR(1) items:
+stmt_list -> stmt . stmt_list [ T_eof T_end ]
+## Transitions:
+-- On T_print shift to state 1
+-- On T_let shift to state 14
+-- On T_if shift to state 18
+-- On T_for shift to state 21
+-- On T_begin shift to state 24
+-- On stmt_list shift to state 28
+-- On stmt shift to state 27
+## Reductions:
+-- On T_eof T_end
+--   reduce production stmt_list ->
+
+State 28:
+## Known stack suffix:
+## stmt stmt_list
+## LR(1) items:
+stmt_list -> stmt stmt_list . [ T_eof T_end ]
+## Transitions:
+## Reductions:
+-- On T_eof T_end
+--   reduce production stmt_list -> stmt stmt_list
+
+State 29:
+## Known stack suffix:
+## T_for expr T_do stmt
+## LR(1) items:
+stmt -> T_for expr T_do stmt . [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+## Reductions:
+-- On T_print T_let T_if T_for T_eof T_end T_begin
+--   reduce production stmt -> T_for expr T_do stmt
+
+State 30:
+## Known stack suffix:
+## T_if expr T_then stmt
+## LR(1) items:
+stmt -> T_if expr T_then stmt . [ T_print T_let T_if T_for T_eof T_end T_begin ]
+## Transitions:
+## Reductions:
+-- On T_print T_let T_if T_for T_eof T_end T_begin
+--   reduce production stmt -> T_if expr T_then stmt
+
+State 31:
+## Known stack suffix:
+## stmt_list
+## LR(1) items:
+program -> stmt_list . T_eof [ # ]
+## Transitions:
+-- On T_eof shift to state 32
+## Reductions:
+
+State 32:
+## Known stack suffix:
+## stmt_list T_eof
+## LR(1) items:
+program -> stmt_list T_eof . [ # ]
+## Transitions:
+## Reductions:
+-- On #
+--   reduce production program -> stmt_list T_eof
+
+State 33:
+## Known stack suffix:
+## program
+## LR(1) items:
+program' -> program . [ # ]
+## Transitions:
+## Reductions:
+-- On #
+--   accept program
+

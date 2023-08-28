@@ -1,0 +1,31 @@
+fun k() : char
+fun foo(h, g, i : int[20]) : char
+
+{
+
+}
+
+fun d(y, j, i : int[24]; ref a : char[][40]; c, foo : int[]; m : int[32]; ref z : char[][0]) : char
+fun b() : nothing
+fun main(n : char; ref b, f : char) : nothing;
+
+{
+
+}
+
+
+{
+  f();
+  while 42 = '\'' do return;
+  return g((27));
+}
+
+fun i(z, main : int[][39]; i, d, d : char[7]; ref baz, a, m : int; ref z, f, c : char[][15]) : nothing;
+
+{
+  bar(+ baz, k(foo(i, (('\'' mod '\'')), boo)), a);
+  while 26 = 12 do {
+
+}
+  m();
+}

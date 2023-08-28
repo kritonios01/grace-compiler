@@ -1,0 +1,11 @@
+fun hello () : nothing
+{
+   $$ swell $$
+   writeString("Hello world!\n");
+    $ diri 
+    $$ fds
+    fd 
+    $$
+}
+$fds
+#

@@ -1,0 +1,44 @@
+fun g(ref n, f, main : int[22]; y : char[]; ref e, x : int[22]; i, x, foo : int[]) : char
+fun i(boo : int[28]; ref m : char[][2]; ref n, h, main : int[]) : nothing
+
+{
+  while '\n' <= 40 do return 'a';
+}
+
+fun f(ref z, h : int[][34][32]; n : char) : char
+fun i(ref m, main, bar : char; n, x : char[]; x, c : int[][23]; foo, b, bar : int[]; h, bar, y : char[][5]) : int;
+fun b(y, boo, l : char[39]; ref e : char[]; main : char[]) : int
+
+{
+  while '\n' = '\'' do {
+
+}
+  c <- y;
+  {
+  c <- - 23;
+  if 25 >= 11 then return;
+}
+  {
+  if 31 > 38 then ;
+  while '\'' < '\n' do baz(main, boo, main);
+  while '7' <= 42 do n((28 - 8), m(n(y(main(i(- 27, ('a')), x, "foo"), + '7', ('a'))), i()));
+  ;
+}
+  if '\n' = '7' then ;
+}
+
+
+{
+  "bar" <- ('a');
+  n['a'] <- j((5 + 1), x(- '\n', (22), ('7' div '\'')));
+  m <- boo;
+}
+
+
+{
+  ;
+  return baz(boo, (9), n(('\''), - '7'));
+  return;
+  l(+ (((z(+ '\'', n, x((3), x, ('7' + '7')))) mod (- '\''))));
+  return - 'a';
+}

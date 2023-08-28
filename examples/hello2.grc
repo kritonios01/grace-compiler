@@ -1,0 +1,14 @@
+fun hello () : nothing
+{
+  $ this is a one line comment
+
+   writeString("Hello world!\n");
+   writeString("Name:\t\"DouglasAdams\"\nValue:\t42\n");
+
+  $ this is a one line comment
+  $$ this is a multiline comment $$
+  $$ff
+  dd
+  dd
+  $$
+}
