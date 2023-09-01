@@ -1,152 +1,141 @@
-%token T_and
-%token T_assign
+%token T_and       "AND"
+%token T_assign    "<-"
 %token T_char
-%token T_colon 
-%token T_comma 
-%token T_constc 
+%token T_colon     ":"
+%token T_comma     ","
+%token T_constc
 %token T_consti 
 %token T_consts
-%token T_div 
+%token T_div       "DIV"
 %token T_do 
 %token T_else 
 %token T_eof
-%token T_eq 
+%token T_eq        "="
 %token T_fun 
-%token T_greater 
-%token T_greatereq 
-%token T_hash 
+%token T_greater   ">"
+%token T_greatereq ">="
+%token T_hash      "#"
 %token T_id 
 %token T_if 
 %token T_int 
-%token T_less 
-%token T_lesseq 
-%token T_lbracket (* [ *)
-%token T_lcbracket (* curly bracket: { *)
-%token T_lparen 
-%token T_minus 
-%token T_mod 
-%token T_mul 
-%token T_not 
+%token T_less      "<"
+%token T_lesseq    "<="
+%token T_lbracket  "["
+%token T_lcbracket "{"
+%token T_lparen    "("
+%token T_minus     "-"
+%token T_mod       "MOD"
+%token T_mul       "*"
+%token T_not       "NOT"
 %token T_nothing 
-%token T_or 
-%token T_plus 
-%token T_rbracket 
-%token T_rcbracket 
+%token T_or        "OR"
+%token T_plus      "+"
+%token T_rbracket  "]"
+%token T_rcbracket "}"
 %token T_ref 
 %token T_return 
-%token T_rparen 
-%token T_semicolon 
+%token T_rparen    ")"
+%token T_semicolon ";"
 %token T_then 
 %token T_var 
 %token T_while 
 
-%start program
 
-%type <unit> program
+%left "OR"
+%left "AND"
+%nonassoc "NOT"
+//%nonassoc "=" "#" ">" "<" "<=" ">="
+%left "+" "-"
+%left "*" "DIV" "MOD"
+
+%nonassoc T_then
+%nonassoc T_else
+
+
+
+%start <unit> program
+
 // %type <unit> func_def
 // %type <unit> header
 
 %%
 
-program        : func_def T_eof  { () }
+let program        := func_def ; T_eof ;                              { () }
 
-func_def       : header local_def_List block  { () }
+let func_def       := header ; local_def* ; block ;                   { () }
 
-local_def_List : /* nothing */             { () } (* side-effect of converting ebnf->bnf *)
-               | local_def_List local_def  { () }
+let header         := T_fun ; T_id ; "(" ; fpar_defs? ; ")" ; ":" ; ret_type ;  { () }
 
-header         : T_fun T_id T_lparen func_args T_rparen T_colon ret_type  { () }
+let fpar_defs      := fpar_def ; more_fpar_defs* ;                    { () }    //
 
-func_args      : /* nothing */            { () } (* side-effect of converting ebnf->bnf *)
-               | fpar_def more_args_List  { () }
+let more_fpar_defs := ";" ; fpar_def ;                                { () }    //
 
-more_args_List : /* nothing */                        { () } (* side-effect of converting ebnf->bnf *)
-               | more_args_List T_semicolon fpar_def  { () }
-
-fpar_def       : ref_opt T_id more_ids_List T_colon fpar_type  { () }
-
-ref_opt        : /* nothing */  { () } (* side-effect of converting ebnf->bnf *)
-               | T_ref          { () }
+let fpar_def       := T_ref? ; T_id ; more_ids* ; ":" ; fpar_type ;   { () }
             
-more_ids_List  : /* nothing */               { () } (* side-effect of converting ebnf->bnf *)
-               | more_ids_List T_comma T_id  { () }
+let more_ids       := "," ; T_id ;                                    { () }    //
 
-data_type      : T_int   { () }
-               | T_char  { () }
+let data_type      := T_int ;                                         { () }
+                    | T_char ;                                        { () }
 
-type_           : data_type brackets_List  { () }
+let type_          := data_type ; brackets_i* ;                       { () }
 
-brackets_List  : /* nothing */                                 { () } (* side-effect of converting ebnf->bnf *)
-               | brackets_List T_lbracket T_consti T_rbracket  { () }
+let brackets_i     := "[" ; T_consti ; "]" ;                          { () }
 
-ret_type       : data_type  { () }
-               | T_nothing  { () }
+let ret_type       := data_type ;                                     { () }
+                    | T_nothing ;                                     { () }
 
-fpar_type      : data_type brackets_opt brackets_List  { () }
+let fpar_type      := data_type ; "[" ; "]" ; brackets_i* ;           { () }
+                    | data_type ;  brackets_i* ;                      { () }
 
-brackets_opt   : /* nothing */          { () } (* side-effect of converting ebnf->bnf *)
-               | T_lbracket T_rbracket  { () }
+let local_def      := func_def ;                                      { () }
+                    | func_decl ;                                     { () }
+                    | var_def ;                                       { () }
 
-local_def      : func_def   { () }
-               | func_decl  { () }
-               | var_def    { () }
+let func_decl      := header ; ";" ;                                  { () }
 
-func_decl      : header T_semicolon  { () }
+let var_def        := T_var ; T_id ; more_ids* ; ":" ; type_ ; ";" ;  { () }
 
-var_def        : T_var T_id more_ids_List T_colon type_ T_semicolon  { () }
+let stmt           := ";" ;                                           { () }
+                    | l_value ; "<-" ; expr ; ";" ;                   { () }
+                    | block ;                                         { () }
+                    | func_call ; ";" ;                               { () }
+                    | T_if ; cond ; T_then ; stmt ;                   { () }
+                    | T_if ; cond ; T_then ; stmt ; T_else ; stmt ;   { () }
+                    | T_while ; cond ; T_do ; stmt ;                  { () }
+                    | T_return ; expr? ; ";" ;                        { () }
 
-stmt           : T_semicolon                        { () }
-               | l_value T_assign expr T_semicolon  { () }
-               | block                              { () }
-               | func_call T_semicolon              { () }
-               | T_if cond T_then stmt else_opt     { () }
-               | T_while cond T_do stmt             { () }
-               | T_return expr_opt T_semicolon      { () }
+let block          := "{" ; stmt* ; "}" ;                             { () }
 
-else_opt       : /* nothing */ (* side-effect of converting ebnf->bnf *)
-               | T_else stmt  { () }
+let func_call      := T_id ; "(" ; exprs? ; ")" ;                     { () }
 
-expr_opt       : /* nothing */ (* side-effect of converting ebnf->bnf *)
-               | expr  { () }
+let exprs          := expr ; more_exprs* ;                            { () }   //
 
-block          : T_lcbracket stmt_List T_rcbracket  { () }
+let more_exprs     := "," ; expr ;                                    { () }    //
 
-stmt_List      : /* nothing */ (* side-effect of converting ebnf->bnf *)
-               | stmt_List stmt  { () }
+let l_value        := T_id ;                                          { () }
+                    | T_consts ;                                      { () }
+                    | l_value ; "[" ; expr ; "]" ;                    { () }
 
-func_call      : T_id T_lparen exprs_opt T_rparen  { () }
-
-exprs_opt      : /* nothing */ (* side-effect of converting ebnf->bnf *)
-               | expr more_exprs_List  { () }
-
-more_exprs_List: /* nothing */ (* side-effect of converting ebnf->bnf *)
-               | more_exprs_List T_comma expr  { () }
-
-l_value        : T_id                                { () }
-               | T_consts                            { () }
-               | l_value T_lbracket expr T_rbracket  { () }
-
-expr           : T_consti                { () }
-               | T_constc                { () }
-               | l_value                 { () }
-               | T_lparen expr T_rparen  { () }
-               | func_call               { () }
-               | T_plus expr             { () }
-               | T_minus expr            { () }
-               | expr T_plus expr        { () }
-               | expr T_minus expr       { () }
-               | expr T_mul expr         { () }
-               | expr T_div expr         { () }
-               | expr T_mod expr         { () } 
+let expr           := T_consti ;               { () }
+                    | T_constc ;               { () }
+                    | l_value ;                { () }
+                    | "(" ; expr ; ")" ;       { () }
+                    | func_call ;              { () }
+                    | "+" ; expr ;             { () }    //mipos ginei me inline?
+                    | "-" ; expr ;             { () }
+                    | expr ; "+" ; expr ;      { () }
+                    | expr ; "-" ; expr ;      { () }
+                    | expr ; "*" ; expr ;      { () }
+                    | expr ; "DIV" ; expr ;    { () }
+                    | expr ; "MOD" ; expr ;    { () } 
         
-cond           : T_lparen cond T_rparen  { () }
-               | T_not cond              { () }
-               | cond T_and cond         { () }
-               | cond T_or cond          { () }
-               | expr T_eq expr          { () }
-               | expr T_hash expr        { () }
-               | expr T_less expr        { () }
-               | expr T_greater expr     { () }
-               | expr T_lesseq expr      { () }
-               | expr T_greatereq expr   { () }
-              
+let cond           := "(" ; cond ; ")" ;       { () }
+                    | "NOT" ; cond ;           { () }
+                    | cond ; "AND" ; cond ;    { () }
+                    | cond ; "OR" ; cond ;     { () }
+                    | expr ; "=" ; expr ;      { () }
+                    | expr ; "#" ; expr ;      { () }
+                    | expr ; "<" ; expr ;      { () }
+                    | expr ; ">" ; expr ;      { () }
+                    | expr ; "<=" ; expr ;     { () }
+                    | expr ; ">=" ; expr ;     { () }
