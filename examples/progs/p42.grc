@@ -1,0 +1,6 @@
+fun d() : char
+
+{
+  baz <- + 36;
+  if 4 >= 41 then return;
+}

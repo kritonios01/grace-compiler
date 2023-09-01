@@ -1,0 +1,16 @@
+fun foo(bar, x : char[][14][29]; ref main, d : char[28][22]; e : int[][30]; n, foo : int[][12]) : char
+fun l(ref h, main, y : int) : nothing
+
+{
+  while '7' = 'a' do if 33 <= 9 then k('7', '\n');
+}
+
+
+{
+  {
+  return;
+  return;
+  if 16 # '7' then g <- '7';
+}
+  while '\'' # '\n' do main <- 'a';
+}

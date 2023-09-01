@@ -1,0 +1,6 @@
+fun a(ref baz : int[]) : nothing
+
+{
+  while '\'' <= 26 do if '\'' >= '7' then ; else return;
+  while '7' >= '\n' do if 9 <= 29 then ;
+}

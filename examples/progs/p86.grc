@@ -1,0 +1,28 @@
+fun a(ref k, boo : char) : nothing
+fun l(boo, i, x : int; ref g, main, y : char[]) : int
+
+{
+  while 14 # '7' do {
+  ;
+  return;
+  return;
+  x <- + 33;
+}
+  boo <- - 5;
+}
+
+
+{
+  if 'a' >= 20 then if '\'' > 30 then {
+
+} else {
+  if 20 # 'a' then j['\''] <- 16;
+  while 'a' = 4 do baz <- '7';
+  return baz;
+  if '7' # 1 then while 'a' = '\'' do a <- '\''; else while 22 >= 'a' do g(9, 3);
+}
+  while '7' <= '\n' do j((12));
+  return;
+  return;
+  while 16 = '\'' do bar[16] <- 0;
+}

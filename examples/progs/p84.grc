@@ -1,0 +1,5 @@
+fun main(ref f, c : int[]; ref j : int[]; a, k : char[][7]) : char
+
+{
+
+}

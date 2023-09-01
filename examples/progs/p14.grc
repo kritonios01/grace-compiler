@@ -1,0 +1,167 @@
+fun a() : nothing
+var a : char;
+fun foo(ref n : int; d, baz, c : int[][33]; ref i, f : int[]; ref k : int[][29]) : char
+fun e(ref n : int[]; y, m : char[]; g, i, h : int) : int
+fun d(bar, g, a : int[][14][8]) : nothing
+fun g(ref a, n : char; ref baz, m, f : int[]; ref e, main : int) : nothing
+fun y(n, boo, c : char; ref n, h : int; ref x : char; y, k : int[]) : nothing;
+fun b(ref boo, z, m : char[]; ref main, y, n : int[][30]; g, c : int[][18]; ref j, i : char[][33]; e : char[]) : char
+
+{
+  b['\''] <- bar();
+  n((('\n' * '\'')));
+}
+
+
+{
+  while '\n' # '\n' do {
+  while '7' # 40 do f[24] <- 30;
+  {
+  return ('a');
+  {
+  x();
+  ;
+}
+  ;
+  ;
+  while 5 >= '\n' do return '\n';
+}
+  while '\'' <= '\n' do f(- '7');
+  ;
+}
+  m <- ('7');
+  {
+
+}
+  while 11 <= 35 do if 'a' # 'a' then return; else m();
+}
+
+
+{
+  if '\'' > '7' then {
+  {
+  if '7' = '\n' then if '7' > 2 then {
+  if 1 < '\n' then c("bar"); else ;
+  {
+  while '7' = 16 do if 12 > 9 then if '\n' # '\n' then while 13 < 'a' do h();
+  ;
+  while '7' <= '\n' do {
+  {
+  return;
+  while 3 > 21 do if '\n' < 19 then j <- '\''; else f <- 32;
+  {
+  n(- (+ (d())));
+  c(((36 * '7')), n(h, b[('7')]), + (x((+ '\n'), ((m(baz(('\'' mod 5), - 30), z)) - (bar(('\n'), (21)))), ((10)))));
+  return;
+  ;
+  h(+ (boo((h))), boo());
+}
+  {
+
+}
+}
+  {
+  boo(y, foo(boo(- (a[(32)]), - (- ((5))))));
+  while 'a' = '7' do foo(('\n'), e);
+}
+  return ('\n');
+  {
+  {
+  x <- + 11;
+  if '7' < '\n' then return;
+}
+  while 1 > 37 do ;
+}
+  while 35 >= 19 do ;
+}
+  if 25 >= 'a' then while 39 # '\n' do g(22, 9, 7); else if 'a' < 15 then {
+  g(bar, "bar");
+} else n(17);
+}
+  ;
+  while '\n' < 37 do main((36 + 2), (35 mod 27));
+} else ; else {
+  {
+  ;
+  return ('\n');
+  {
+  return + 42;
+  while 23 # 11 do baz <- 10;
+  ;
+}
+  {
+  return;
+  if 34 < 19 then {
+  d <- ('a');
+  m <- ('a');
+  "foo" <- (25);
+} else ;
+  ;
+}
+}
+  {
+  ;
+  ;
+  l <- n(- 'a', main, + 41);
+  c((('\n')), + ((((9)) - ((37)))), - (c(- ((35)))));
+}
+}
+  if 0 > 38 then c(- '\'', (31 div '\''));
+  ;
+  g(m, ((j((4 - 36))) mod y), y);
+  if 19 >= 30 then if 36 >= 4 then baz(38, 25, '7'); else {
+  if 5 > '\n' then m <- 'a';
+  return (8 div 'a');
+  return + 35;
+}
+}
+  {
+
+}
+  d(k(((+ 10) - (+ 32)), (- 'a')), c, x());
+}
+  if 'a' >= 38 then "foo" <- 38;
+}
+
+fun g(l : int[]; f, z : char[][38]) : nothing
+
+{
+  while '\'' = 19 do return 18;
+  main(- (((y()) div (n()))), (('\'')));
+  y(n[- 22]);
+  if '7' > 4 then return; else baz();
+  return b;
+}
+
+fun l(ref foo, d : char[]; x, f, h : int[][5]; n, boo, g : int[][33]; ref main, b, m : char) : nothing;
+
+{
+  if '7' < 6 then ;
+  return ('7' * 1);
+}
+
+var m, j, boo : int[29];
+
+{
+  while 26 # '\'' do i();
+  while 8 = 18 do ;
+}
+
+fun baz(h, d : char; ref e : char[]; ref l, m, d : int; ref c, baz : int[]; d, boo, a : int) : char
+
+{
+
+}
+
+
+{
+  if 37 >= 16 then {
+  return foo;
+  j();
+  return (27 mod 8);
+  return ('\n' div 29);
+}
+  ;
+  while '\n' = '\'' do foo['\''] <- 8;
+  baz((- 9), ((15 div 17)));
+}

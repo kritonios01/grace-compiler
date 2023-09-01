@@ -1,0 +1,98 @@
+fun k(i, d, main : int; b, x, c : char[][39][13]; ref m, b, g : int; ref n : char[][21]; bar : char[22][23]) : nothing
+fun bar(ref l, k : int[]; k, e : char; j, z : int[28][35]) : nothing
+fun j(ref x, a, g : int; y : int[4]; ref baz, baz : int) : nothing
+fun j(a, g : char[][20]; d, h, x : char) : int
+var e : int;
+fun c(h : int[][31]; ref boo, z, x : char[]; n : char[]; boo, bar, g : char[]; ref b : char[][34]) : char
+fun a(a : char[]; ref a, e, j : int; boo : int; x, f : char[17]; ref y, z, k : int) : nothing;
+fun a(ref n : char[]; ref baz, m, k : char[]; ref a : int[]) : char;
+
+{
+  if 10 = '\'' then l();
+  if 16 < 23 then {
+  ;
+  while 5 = 'a' do main <- 'a';
+} else e();
+  return;
+  if 0 < 5 then if '7' < '\'' then ; else return 7; else ;
+}
+
+fun y() : nothing
+
+{
+  return a(- 31, (17));
+  if '\n' > '\'' then while 'a' = 10 do {
+  i(+ (f(((23 + 7)))), ((y("Name:\t\"DouglasAdams\"\nValue:\t42\n", ('7' - 35), + 'a')) * (+ '\'')), baz((('7')), boo((- 20), c)));
+  if '\'' # 12 then if '\'' = '\'' then "Route66" <- 12; else while '\'' <= 39 do ;
+  n(k(+ (f()), ((34 mod 20))), (((42 mod 10)) * (('7'))));
+  ;
+  return;
+} else "Route66" <- '7';
+  baz <- e(('\n'), ('\''), + 36);
+  {
+  ;
+  c <- ('\'');
+  return;
+  {
+  if 8 >= 40 then while 'a' >= 25 do if 36 >= '\n' then ; else {
+  {
+  if 10 > 31 then while '7' = '7' do ; else while '\n' <= 0 do c <- 4;
+  g[31] <- (29);
+  "foo" <- ('\'' mod '\n');
+  ;
+  "bar" <- (12 div 24);
+}
+}
+  {
+  {
+
+}
+}
+  "Name:\t\"DouglasAdams\"\nValue:\t42\n"[12] <- l['a'];
+  return;
+  ;
+}
+}
+  while 4 # '7' do while '7' > '7' do {
+  if 11 > 16 then g <- '7';
+  x <- i(b(('\'' - 23), bar), bar['7']);
+  while '\n' < '7' do foo <- '\'';
+  g(((('\'' div 23)) div k), - (c[boo]), - (+ ((3 div '\n'))));
+}
+}
+
+
+{
+  x(g, c);
+  f((("Route66"[35]) mod ((7))), ((40)), l(- l, + (((d(bar(baz(('\''), (17), i(boo(y(), i((23 div '\n'), + 6, l(boo, x)), + 2), (32), h()))), b)) - (d())))));
+  while 27 = 5 do main(main((24 mod 'a'), ('7')), foo("Route66", (1 mod 18)));
+  return + 0;
+}
+
+var z, a : int;
+
+{
+  if '7' # 23 then {
+
+}
+  e();
+  while 38 > 0 do i();
+  foo(d, + (- (baz(('\n' div 'a')))));
+  ;
+}
+
+var h, l : char[34];
+
+{
+  {
+
+}
+  y['7']['7'] <- c;
+}
+
+fun i() : int;
+
+{
+  z(((23 div '\n')), + ((('a' * 'a'))), + b);
+  baz((('7' mod 'a')));
+}

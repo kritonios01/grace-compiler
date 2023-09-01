@@ -1,0 +1,32 @@
+fun a(k, n : char[35]; b : int[][24][26]) : nothing
+var a : int;
+fun c(ref k, k : char; baz, x, h : int[][12]; ref bar, boo, bar : int) : int;
+fun b(ref k : int[]; l, bar : char[23]; n, baz : int[][23]; ref l, baz : int[][10]) : nothing;
+
+{
+  {
+  {
+  if 37 = 12 then if '\n' # 15 then z['\n'] <- 28; else e <- '\n';
+  ;
+}
+}
+  {
+  return;
+  while 5 > '\'' do {
+  baz();
+  ;
+  z['a'] <- f;
+  {
+
+}
+  return n();
+}
+  if 'a' = 38 then ; else d <- '\'';
+}
+  if 2 >= '7' then while '\'' <= '\n' do if 'a' >= 5 then l('\''); else ; else {
+  l();
+  ;
+}
+  while 1 # '7' do b['\''][39] <- '\'';
+  foo(+ ((f)));
+}

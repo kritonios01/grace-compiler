@@ -1,0 +1,5 @@
+fun b(c : char[30][3]; ref f : int; ref b, boo : char; ref d : int; m, g, main : char) : nothing
+
+{
+  return;
+}

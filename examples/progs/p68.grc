@@ -1,0 +1,34 @@
+fun n(ref j, g : char[]; j, boo : char) : nothing
+fun baz(main : char[]; b : char[]) : nothing
+fun x(f, n, main : int[]; main, i : int[]; j : int; ref x, m : char) : nothing
+
+{
+  {
+
+}
+  d <- a();
+  x(((d(main(f, y, y(('\''), "Name:\t\"DouglasAdams\"\nValue:\t42\n")), (19 + 40))) + (k(- '\n'))));
+  if '\'' = '\n' then foo <- '7'; else foo <- 7;
+}
+
+var z, m, bar : int[28];
+
+{
+  {
+  return y(('7' + 'a'), "Name:\t\"DouglasAdams\"\nValue:\t42\n", ('a' * 37));
+  if 33 # '\n' then ; else c(+ 31, + '7');
+  j <- b;
+}
+  b <- - '\'';
+  return;
+  m(e, (m(main, (33 mod 'a'))), e);
+}
+
+
+{
+  return;
+  ;
+  return (22 - 34);
+  l("bar", (a()), ((33)));
+  if '\'' > 30 then return;
+}

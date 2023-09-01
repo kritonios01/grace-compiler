@@ -1,0 +1,17 @@
+fun j() : nothing
+fun n(ref foo, a, boo : char; z : int[]; ref boo : char[1]; h, n, baz : int[32][14]) : nothing;
+fun g(ref b, d : int[][2]; ref x, baz, j : int[34]; ref baz : char; foo, h : int) : nothing;
+fun h() : char
+fun main(ref a : int; baz : char[][2][9]; j, m : int[]) : char;
+var baz, j : int;
+
+{
+  h <- ('\'');
+  return;
+}
+
+
+{
+  z();
+  ;
+}

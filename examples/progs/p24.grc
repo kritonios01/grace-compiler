@@ -1,0 +1,73 @@
+fun h() : char
+fun c(g, b, k : int[]) : nothing
+fun j() : char;
+fun h(i, n, d : int[7][1]) : nothing
+var e : char;
+
+{
+  ;
+}
+
+fun h(ref baz : char[][16]; baz, bar, z : char; main, h, n : char; j, j, k : char) : char
+fun boo(ref k, j : char; ref x, k, n : int[]; ref n : char[7]; ref a, f : int[]) : char
+fun a(x, l : int[][7]; ref d, a, h : char[31][1]; n : char[][31]; ref i : int[]) : char
+
+{
+  d <- boo[32];
+  if 9 >= '\'' then return 5;
+  baz <- - 36;
+  ;
+}
+
+
+{
+  f['7'] <- b['\''];
+}
+
+var e, y : int;
+fun k(i : int[]) : nothing
+var z, z : char[19];
+
+{
+
+}
+
+
+{
+
+}
+
+
+{
+
+}
+
+fun j() : nothing
+
+{
+  ;
+}
+
+fun i() : nothing
+
+{
+  {
+  ;
+}
+  while 27 > '\n' do k <- '\n';
+  c <- (9);
+  f <- m(baz((26 div 'a')));
+}
+
+
+{
+  if '\'' <= 37 then while 'a' < 'a' do bar <- '\n'; else y['a'] <- 27;
+  x(z);
+  l();
+  {
+  z <- foo;
+  k <- b;
+  x();
+  if 0 <= 41 then if 38 >= '7' then while '\'' <= 36 do l(); else ;
+}
+}

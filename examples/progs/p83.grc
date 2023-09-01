@@ -1,0 +1,8 @@
+fun baz(ref boo : char[][23]; ref d : char; ref n, baz : int[]; l : char[][23][5]) : char
+fun z(e, c : char; j, baz : int) : nothing;
+fun k(ref h, l, boo : char[][32][37]; x : char[][30]; ref c : int[]) : nothing;
+
+{
+  return;
+  return b(('\n'));
+}

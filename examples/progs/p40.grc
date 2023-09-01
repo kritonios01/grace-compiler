@@ -1,0 +1,8 @@
+fun e() : char
+fun h(k, z : char[][25]; y : char[][24]; j, l : int) : char;
+var bar : char;
+
+{
+  return - '\'';
+  ;
+}

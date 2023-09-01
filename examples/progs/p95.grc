@@ -1,0 +1,6 @@
+fun g(ref d, baz, boo : int[16]; ref boo, z, c : int[]; ref l : int[24]) : int
+var main, baz : char;
+
+{
+
+}

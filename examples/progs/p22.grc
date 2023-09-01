@@ -1,0 +1,10 @@
+fun foo() : nothing
+
+{
+  ;
+  {
+
+}
+  if 'a' # 5 then return 14;
+  bar <- h(- 29, "Name:\t\"DouglasAdams\"\nValue:\t42\n", - 34);
+}

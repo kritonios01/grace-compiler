@@ -1,0 +1,6 @@
+fun z(ref a, n, boo : char[]; baz, y, m : int[2]; f, h : char[]; ref b, boo, f : int[][39]; ref i, y, n : int) : int
+
+{
+  ;
+  while '7' >= 31 do h(+ '\n');
+}

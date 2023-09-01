@@ -1,0 +1,6 @@
+fun f(ref main, i : char[]; ref g, z : char[4]) : nothing
+var c, bar, x : int;
+
+{
+  while 14 = 'a' do if 15 < '7' then while 'a' < '\n' do ; else return;
+}

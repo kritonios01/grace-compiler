@@ -1,0 +1,35 @@
+fun z(ref foo, e : char[]) : nothing
+fun foo(ref k, bar : int[][9]) : nothing;
+var z, b, h : char;
+fun h() : nothing
+var bar : int[17];
+
+{
+  if '\'' > 34 then {
+  if 17 < 8 then return '\'';
+  return ('a');
+  return;
+  return main(baz);
+  if 33 <= 18 then e[12]['\''] <- 4; else return;
+}
+}
+
+
+{
+  ;
+  ;
+  {
+  if 31 # 27 then main <- '\n'; else if 'a' = 16 then g <- 'a'; else if 40 # 31 then {
+  return j((37 mod 29), x);
+  if 'a' < '7' then if '\'' >= 'a' then ;
+  if 20 = 39 then while 18 > 21 do if '7' >= '\n' then {
+  ;
+  while 16 # 'a' do e['7'] <- 3;
+  return;
+} else while '\'' < 20 do ;
+}
+  ;
+  ;
+}
+  while '\'' <= 26 do ;
+}

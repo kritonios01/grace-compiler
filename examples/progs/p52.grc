@@ -1,0 +1,11 @@
+fun main(ref m, x : int[]) : nothing
+
+{
+  m(c, boo((c), - ((h(g, k(f(('\''), ('a'), + 'a')), (30))))));
+  {
+  while 'a' < '\'' do while '7' <= 12 do while 30 > 9 do if 42 <= 20 then a <- 10;
+  if '\n' # 42 then while 39 # '7' do while 17 >= 18 do while '7' # 34 do h <- 'a';
+  z((- 'a'));
+}
+  ;
+}

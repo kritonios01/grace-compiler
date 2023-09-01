@@ -1,0 +1,25 @@
+fun i(d : char; ref b, g, f : char[25]; ref y, h, z : char[]; n, bar, e : int; ref l, baz : int[]) : char
+fun k(boo, x, b : int; ref baz, g : int[31]; ref foo : char[]; ref m : int[]) : nothing
+
+{
+  bar <- a(+ '\n');
+  {
+  return l(('7' - 35));
+  while '\n' >= 20 do {
+
+}
+}
+  if 24 # 15 then while 23 <= 37 do i();
+}
+
+
+{
+  {
+  l();
+  ;
+  foo(- (((- '7') + ((4)))), (d(l(('7' - 40)), (17))), (((15)) mod (a(+ '7'))));
+  ;
+  z();
+}
+  ;
+}

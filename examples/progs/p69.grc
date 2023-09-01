@@ -1,0 +1,39 @@
+fun g() : nothing
+fun n(baz, foo : char[27][37]; ref k : int[24]; i, x : char[11]; n, n, h : int; ref c : char[]) : char
+fun main(boo : char[34]; ref x, x, main : int[][37]; x, bar : int[]; ref baz, l, c : char[][33]; ref f, k : int[1]) : char
+fun l(main : char[]) : nothing
+
+{
+
+}
+
+fun a(b : char[][13]; m, main, h : int[0]; ref f, m, baz : int[]; ref j, f : int[41]) : int
+
+{
+  f <- (26 * '\n');
+}
+
+
+{
+  b("Route66"[+ '\'']);
+  return + 18;
+}
+
+
+{
+  {
+  k <- (9);
+  foo <- c();
+}
+  return (16 div '\'');
+  ;
+  if '\n' < '\n' then d <- 29;
+}
+
+var g : char[10];
+
+{
+  while 20 <= 36 do while 5 = '7' do if '\'' >= '\n' then while '7' < 9 do main(); else return;
+  return;
+  while 'a' > 5 do j((23 mod '\''), (3));
+}

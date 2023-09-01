@@ -1,0 +1,8 @@
+fun g(ref k : int[7]; baz, g : char[]; ref n, boo : char[][11]; ref e, x : int[][23]; z, g, baz : char[][15]) : char
+var j, c, f : char[23];
+
+{
+  ;
+  bar <- - '\n';
+  while 15 <= 3 do k <- '7';
+}

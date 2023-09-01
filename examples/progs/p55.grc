@@ -1,0 +1,7 @@
+fun e(ref y, baz, j : int; ref d : int) : nothing
+
+{
+  ;
+  ;
+  ;
+}

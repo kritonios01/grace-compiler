@@ -1,0 +1,51 @@
+fun j(ref z, k : char[16]) : char
+fun i() : char
+fun b(y, e, n : char; ref boo, z : char[]; ref m, l : int[27]) : char
+fun m(ref f, e, z : char; baz, c : int[][28]) : nothing;
+fun e(ref g, y, foo : char[42]; ref boo, j : int) : char
+var foo : int;
+fun n(ref j, z, g : char[]; ref k, x, k : int[]; ref d, g, b : int[]) : int
+
+{
+  ;
+  if '\'' < 14 then return 19; else while 10 >= 31 do n(24, '7');
+}
+
+
+{
+  ;
+  return;
+  if '\n' < 17 then while '7' <= 22 do return '7'; else return 40;
+}
+
+fun a(z : int[][37][8]; main, l : int) : nothing;
+
+{
+  j(x((f), (- 16)));
+  ;
+}
+
+fun n() : char
+
+{
+  if 4 # 'a' then i(baz, (22 - 27));
+  f <- ('a');
+  ;
+}
+
+
+{
+  z(((- 15) - (('\'' * 39))));
+}
+
+fun y(j, e, z : int[][3]) : nothing
+
+{
+  ;
+}
+
+
+{
+  l();
+  while '\'' < 'a' do ;
+}

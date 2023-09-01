@@ -1,0 +1,24 @@
+fun y(bar, d, f : char[38][30]; ref b, k : char[]; ref baz, boo, bar : char[19]; ref d, y : int) : nothing
+fun baz() : nothing
+var n, foo, f : char[11];
+
+{
+  ;
+  return (27);
+  if '\n' = 21 then while 36 = 26 do h[0] <- '\n';
+  while 9 = '\'' do return 24;
+  if 2 = '\'' then {
+  while '\n' <= '7' do ;
+  while '\n' > 11 do e();
+  return;
+} else while 35 # 33 do k['\''] <- 'a';
+}
+
+
+{
+  {
+  i['\n'] <- n(('\''), (0 mod 'a'));
+  return + 42;
+  ;
+}
+}

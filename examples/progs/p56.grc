@@ -1,0 +1,10 @@
+fun foo(ref boo, f, l : char[]; x, bar : int[][39][0]) : char
+var x, bar, g : char[6][16];
+
+{
+  if 20 = 17 then return;
+  if 17 # 7 then return;
+  while 40 # 19 do ;
+  return ('7' + 22);
+  return + 10;
+}

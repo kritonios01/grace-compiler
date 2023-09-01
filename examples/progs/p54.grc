@@ -1,0 +1,36 @@
+fun f(ref d : int[28]; ref i : char[][13]; g, bar, main : char; ref foo : int[9]; i, h : int[36]) : nothing
+fun foo(ref i, main : char[][6][25]; baz, k : int[]; ref h, k : int) : nothing
+
+{
+
+}
+
+fun m() : nothing
+fun baz(ref e : int) : char
+var main : int;
+fun bar(ref b : char; ref c, a : int) : char;
+
+{
+  k();
+  foo(((('7')) + y), ((b(('\'' - 23), (40 mod 10), (41))) mod y));
+}
+
+
+{
+  {
+  foo(((- '\'') div k), (bar()));
+  return;
+}
+  ;
+  if '\'' < 15 then h <- 33; else while 6 >= '\'' do ;
+  return "Name:\t\"DouglasAdams\"\nValue:\t42\n";
+}
+
+
+{
+  while 'a' > 29 do ;
+  if '\n' >= 9 then ;
+  i <- x;
+  if 18 < 2 then ;
+  return + 'a';
+}

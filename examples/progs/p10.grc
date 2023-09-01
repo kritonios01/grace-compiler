@@ -1,0 +1,22 @@
+fun h(j, c, x : int; ref d : char) : int
+var baz, g, m : int;
+fun y(ref j, x : int[22]; ref a, z, boo : int; ref l, boo : char) : nothing
+fun g() : char
+
+{
+  ;
+}
+
+
+{
+  {
+  i(((x(boo)) + baz), (y((13), ('a' - 3))), (x()));
+}
+  d(- (((+ 34) div (- 30))), ((- 4) * (+ '\'')), - ((+ 29)));
+}
+
+
+{
+  ;
+  ;
+}

@@ -1,0 +1,15 @@
+fun main(d : int[15]; d, c, l : char[9]; baz : char[37]; ref i : char[]) : nothing
+fun f(ref m : int[]; ref y : int[5]; ref i : int[][13]) : nothing
+
+{
+  n <- ('\'');
+  ;
+  return + 3;
+  e <- ('a' mod 29);
+}
+
+
+{
+  if '\n' # 'a' then ; else z <- 6;
+  return j;
+}

@@ -1,0 +1,71 @@
+fun a(ref boo, h, h : int; ref d, g : char[][6]; i : int[]; m : int) : int
+fun d() : nothing;
+fun e() : nothing
+fun k(m : char; ref i : char[][6]; ref g, f, y : char[27]; c, z : int; main, x, foo : char[1]) : int
+
+{
+  return;
+  e("Name:\t\"DouglasAdams\"\nValue:\t42\n", - (bar(i(l(j(), (h), z), (((32 + 21)) div (foo(k))), b), (- 21))));
+}
+
+
+{
+  if 21 = 'a' then return 25; else {
+  y((b * (x())), ((+ '\n') div ((42 mod 25))), - (k(- (a(e(), bar(+ ((13 mod 10)), (6)), (30))))));
+  x <- - '\n';
+  j();
+  while 17 < '7' do {
+  main[40] <- + '7';
+  return;
+  while 16 = 35 do while '\n' <= '7' do while 22 > 38 do while 5 < 39 do return;
+  boo <- + '\n';
+}
+}
+  h();
+  if 34 = '\n' then {
+  {
+  l <- k;
+  {
+  x((((31 + 34)) * bar));
+}
+  j();
+  return m(('\n' mod 39));
+}
+  c(((('\'' div '\'')) mod ((14))), ((- 42) div (+ 37)));
+  main(((('\'')) + main), (+ 24), h);
+  ;
+} else {
+  ;
+  ;
+}
+  bar <- n;
+  ;
+}
+
+fun y() : char
+
+{
+  ;
+  e(i);
+  if 0 >= 3 then {
+  return z;
+} else ;
+  {
+  {
+  if '7' <= 20 then ; else ;
+  return;
+  return;
+  e(((+ 29) mod ((29 + '\''))), "foo"['7'][13][foo], ((('7')) div (+ '7')));
+  ;
+}
+  return;
+  {
+  z(main(n(), boo(foo(d, z((+ 13), (e)), ((x['7']) div f)))), (((15)) - "Route66"));
+}
+}
+}
+
+
+{
+
+}

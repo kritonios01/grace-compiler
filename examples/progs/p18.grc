@@ -1,0 +1,97 @@
+fun n(ref bar, baz : char[]) : int
+fun main() : int
+fun foo(ref i, c : int[]; m : char[]; h, c, g : int[26][28]; ref n : char[]; ref boo, a, bar : int) : int
+var foo : char;
+var l : int;
+
+{
+  {
+  ;
+}
+  while 20 # 'a' do return;
+  {
+  n(baz[foo()], - (((('7' + 1)) div (+ 40))), boo(((- '\n') + boo), j(+ ((bar)), + (- (+ (+ 27))), x())));
+}
+  ;
+  {
+  a(((('a')) - ((40 + 'a'))));
+  ;
+  ;
+}
+}
+
+var foo, main : int[24];
+fun baz(ref d : int; ref y, main, e : char) : nothing
+
+{
+  j();
+  b <- (11 + 14);
+  k <- ('a');
+  while 36 = '\n' do {
+  return ('7');
+  x(((- 37) div (- 1)));
+  ;
+}
+}
+
+
+{
+  if 3 > 42 then return;
+  i(i, "Name:\t\"DouglasAdams\"\nValue:\t42\n"[(21 + 17)]);
+  if 'a' <= 'a' then c(('\n' - '\''), (1), bar(- 23, z(+ '\'', + '\'', ('\'' + 42)), n(('a')))); else if 'a' >= 21 then if '7' <= 12 then if '\n' = '\n' then while 'a' >= '\n' do if 21 > 25 then ; else return; else a('7', 4);
+  while '\n' = 26 do while '7' = 31 do if '\n' = 16 then bar(19, 'a');
+  {
+  boo();
+  main();
+  {
+  ;
+}
+  i();
+  n(g, h(z()), + (((('7')) + bar)));
+}
+}
+
+fun b(ref baz : char) : int
+var main : char[35][9];
+fun c(main : char; ref bar, foo : char[]; baz : int[]; i, e, c : char[]) : int
+fun j(ref i, j : int) : nothing
+fun l(ref foo : int[]; c, n, l : char[]; foo, foo : char[27]; ref h : char[][24]) : nothing;
+fun j(baz, n, x : char[]; ref bar, d : char[23]; ref baz, m, m : char; foo : int) : char
+
+{
+  if 'a' < '\'' then return; else return;
+  "Route66" <- n;
+  i[32] <- m(('\n' div 12));
+}
+
+var m, n : int;
+
+{
+  while '\'' >= '\'' do return;
+  ;
+  g(bar((- 14), (('\n' * 2))), + (((17 mod '7'))));
+  f <- c("bar", ('a' mod 'a'), foo());
+}
+
+var k, z : int[18];
+
+{
+  "Route66"['7'] <- ('\'' * '\'');
+  {
+  ;
+}
+  if '7' > '\'' then return; else if 38 > 12 then m(12, 23, 'a'); else ;
+}
+
+
+{
+
+}
+
+
+{
+  if 4 >= '\n' then n(n, (29 div 3), z['a']);
+  return b;
+  return a((4 + 34), h(('a' div 12), (7 + 21)));
+  while 'a' = '\n' do while '\n' = '\'' do while 17 > 0 do main('\'');
+}

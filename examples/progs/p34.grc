@@ -1,0 +1,8 @@
+fun i(ref d, f : char[][34]) : nothing
+
+{
+  while 'a' # '\'' do while '\n' < '\'' do f(4, '\n', 33);
+  ;
+  if 28 > 15 then foo();
+  "Name:\t\"DouglasAdams\"\nValue:\t42\n" <- ('\n' - '7');
+}

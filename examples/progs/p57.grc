@@ -1,0 +1,45 @@
+fun a() : int
+fun f() : nothing
+var i, baz, a : char[34][30];
+fun z() : nothing
+
+{
+  if '\'' = '\n' then if 15 < 28 then boo[3] <- 'a'; else {
+  b(((('\n')) - (('\n'))));
+}
+  g();
+}
+
+
+{
+  m <- (23 div '\n');
+  if 29 <= 37 then ; else if '\'' <= 1 then {
+  while 14 >= 'a' do while '7' <= 32 do {
+  while 16 > '7' do {
+  b <- - 7;
+  if 34 > 20 then g(b['7'], - 'a', (30));
+  z <- + 9;
+  {
+
+}
+}
+  y['\n'] <- ('\n' - 2);
+}
+  if 'a' >= 'a' then f(); else return;
+  if 33 # 23 then g['a'] <- 39; else {
+  {
+  return foo(i);
+}
+  return ('\'' - 3);
+}
+}
+  return (20 mod '\n');
+  f <- ('7');
+}
+
+var c, x : int[9];
+
+{
+  return;
+  ;
+}

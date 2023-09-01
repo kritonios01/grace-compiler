@@ -1,0 +1,60 @@
+fun z(m : int[][8]; ref n : int[]; ref e : int[][19]) : nothing
+fun e(ref g, f : char; j, y : int[5]; m, boo : int) : nothing;
+fun bar(ref k, k : char[22]; ref b, k : char[40]; h : char[27]) : int;
+
+{
+  if '\'' <= 7 then return 24; else ;
+  {
+  e((('\'')), "Name:\t\"DouglasAdams\"\nValue:\t42\n"[- 15], e());
+  if '\n' = '7' then ;
+  while 41 = 'a' do {
+  n <- + '\n';
+  while 18 < 13 do while 'a' > 9 do foo <- '\'';
+  while 13 # 29 do if 13 # 7 then return 'a'; else while 11 # '\'' do l <- '\'';
+}
+  ;
+}
+  {
+  bar <- (18);
+  if 30 # 'a' then return 30;
+  i <- a;
+}
+  {
+  ;
+  while '7' # 23 do ;
+  {
+  while 28 < 28 do baz(('a' - '\''), - 34);
+  if 27 <= 'a' then if 1 > 1 then {
+  ;
+  if 8 < '7' then ; else return 15;
+  {
+
+}
+  return j;
+  if 39 <= 12 then bar();
+} else c['\n'] <- '\n';
+  {
+  {
+  {
+  if 'a' <= '7' then ; else return;
+}
+  return ('\'' + '7');
+  while 37 # '\'' do return 'a';
+  while 17 = '\n' do if 13 = '7' then {
+  while 'a' >= '7' do return;
+  ;
+} else if '\n' > '\n' then "Route66" <- '\'';
+  ;
+}
+  ;
+  while '\'' <= '7' do "bar" <- 33;
+  {
+  ;
+}
+  baz <- main;
+}
+  d("Route66", x((((7)) div (('\n'))), - (n()), - (l())), (((31 mod 32)) + (+ '\'')));
+  return ('a' - 7);
+}
+}
+}

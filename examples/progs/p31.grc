@@ -1,0 +1,71 @@
+fun e(baz, e, e : char; h, boo, k : char) : char
+fun bar() : int
+fun m() : int
+
+{
+  ;
+  "bar" <- e(- 29, boo());
+  ;
+}
+
+fun foo(ref z, y, a : char[]; i : char[]) : char
+
+{
+  m();
+  if 'a' < 14 then baz <- 33;
+}
+
+fun g(ref m : int; boo, k : char[42]; ref baz : int) : nothing;
+
+{
+  n <- - 'a';
+  if 'a' >= 22 then {
+  while 3 >= 'a' do ;
+  ;
+  main(boo[k(h(('\'' mod 25)), l, ('7'))]);
+}
+}
+
+fun k(ref g : char[33]) : nothing
+fun baz(ref d, x : int; ref m : int[]; b, b, a : char[19]) : int
+fun h() : char
+fun boo(g, l : int[][0]; ref n, a : int[33]; g, d, foo : char; boo : char[30]) : nothing;
+fun m(a : int; l, boo, e : int[]; j, k, g : char[32]; ref k, c, i : char[]; ref m, f, foo : int) : int;
+fun n() : char;
+
+{
+
+}
+
+fun z(ref k : char; baz, i, j : int) : nothing;
+
+{
+  ;
+  ;
+  b((+ '\n'), (j), ((23)));
+}
+
+fun x(ref k, g : int[26]) : nothing
+fun m(d, main, baz : char; ref baz : char[9]; ref x, m, b : char) : int;
+
+{
+  i(boo(((12 * '\n'))), l);
+  l((+ 28), ((h("foo", ('\n'))) mod ((31 mod 41))));
+  while 19 = 'a' do j <- '7';
+  ;
+  {
+  z(+ (bar()));
+  a();
+}
+}
+
+var f, baz : int;
+
+{
+  n(- d, j);
+}
+
+
+{
+
+}

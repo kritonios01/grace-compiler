@@ -1,0 +1,26 @@
+fun y(ref b : int; ref foo : int[]; ref n, h : int[]) : nothing
+fun x(baz : char[7]; ref main, main : char) : int
+fun g(j, n : int; k : char[][30]) : nothing
+
+{
+  i <- i(baz(a));
+  return ('\'' + '\'');
+}
+
+
+{
+  if 27 # 42 then while 21 # 20 do "Route66" <- '\n'; else while 20 >= 23 do n(11, 13);
+}
+
+fun b(ref h, l, x : char) : nothing
+var b, j : int[19];
+
+{
+  ;
+}
+
+
+{
+  return;
+  if 'a' > 0 then n['a']['a'] <- 8;
+}

@@ -1,0 +1,6 @@
+fun foo() : nothing
+
+{
+  while '\n' >= 32 do return;
+  ;
+}

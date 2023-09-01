@@ -1,0 +1,20 @@
+fun bar(ref c, c : int[]; ref foo : int; ref i : int[]; ref d : char[][10]) : int
+fun j(m, d : char[][42]; baz, main : char; z : char[][18][4]; ref x, f : int[]; ref l, z, n : char[][15]) : nothing;
+fun z() : nothing
+var e, e : int;
+fun h(ref d : char; c : int[25]; l : int[]) : char;
+var k, h, f : int;
+
+{
+  h();
+  {
+
+}
+}
+
+fun g() : nothing;
+
+{
+  y[13] <- ('\'');
+  ;
+}

@@ -1,0 +1,6 @@
+fun k(foo : int; i, g, main : char; foo : char[][25]) : int
+
+{
+  return;
+  if 'a' > '\n' then ;
+}

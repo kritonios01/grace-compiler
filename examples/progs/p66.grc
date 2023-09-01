@@ -1,0 +1,10 @@
+fun boo(a : int[]; j, f, c : int[30]; ref bar : char[41]) : nothing
+var bar, m : char[0];
+
+{
+  {
+  return;
+  return ('\n');
+  while '\'' = 24 do h((19 mod '\n'));
+}
+}

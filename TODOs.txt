@@ -1,1 +1,10 @@
-na valw word, char, line count
+na valw word, char, line count ston lexer (na dw kai ayto https://dev.realworldocaml.org/parsing-with-ocamllex-and-menhir.html)
+
+MENHIR-PARSER
+sel 16 tou menhir-manual: prwto paradeigma gia tin prwth ekdosh tou parser
+
+comments ston parser.mly
+na paijei me to kainourio api (generated api)
+na to ftiaxw na trexei me ocamlopt kai oxi ocamlc
+na petaei katallila errors analoga to lexing h to parsing (to lexing den exei errors) kai na leei se poia grammi einai
+

@@ -1,0 +1,9 @@
+fun b(ref l : char; x, f : int[5]; l, boo, j : int[11][0]) : nothing
+
+{
+  return;
+  bar['\''] <- ('7' div 32);
+  return + '\n';
+  return;
+  while 42 < 2 do if 38 < '\n' then ;
+}

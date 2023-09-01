@@ -1,0 +1,10 @@
+fun x(d : char[]; i, b : char[][35]; z : char[]; ref i : int[42][11]; ref d, x, g : int) : char
+var y : char;
+
+{
+  a <- e();
+  x <- (30);
+  f((('\'')), (+ 7), + j);
+  ;
+  while 33 <= '\n' do if 24 >= '\n' then l('a', '\n');
+}

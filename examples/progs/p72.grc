@@ -1,0 +1,7 @@
+fun f(baz, y, b : char; boo : char; ref y, b : char; ref l, i, e : char; n, f : char[]) : nothing
+var j : char;
+
+{
+  e <- boo;
+  if 'a' = '7' then return '\n'; else a <- 28;
+}

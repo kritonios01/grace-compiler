@@ -1,0 +1,10 @@
+fun main(ref x, g, c : int; m, g, c : char[]; bar : int[]; l, foo, b : char[]) : char
+var i : char[0][6];
+fun n(bar : int[][3][26]; e : int[]) : nothing;
+
+{
+  d <- ('7');
+  if 'a' < '\n' then n <- 20;
+  z(e);
+  return f;
+}

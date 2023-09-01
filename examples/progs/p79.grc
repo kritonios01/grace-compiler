@@ -1,0 +1,5 @@
+fun d(m, baz : char; ref f, h, h : char[]; b, x, i : int[]; ref h : char[16]) : nothing
+
+{
+
+}

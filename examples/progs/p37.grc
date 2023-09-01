@@ -1,0 +1,6 @@
+fun i(n, d : int[41][32]; ref b, h, j : char[7]; l, g, b : int[25]; ref x, boo, boo : int[]) : int
+
+{
+  while 'a' = 6 do return 12;
+  ;
+}

@@ -1,0 +1,101 @@
+fun j(ref e, l, baz : char[30]; ref g : char; ref bar, foo, i : char; ref h, z : int[]) : nothing
+fun m() : nothing
+fun f(x, e : char[20][32]; ref j : char[]; ref i : char; ref h, f : char) : int
+
+{
+  if 42 <= 5 then if '\'' > 42 then while 'a' # 24 do return; else e <- '7';
+  {
+
+}
+  while '\n' < 'a' do if 35 >= 26 then h['\''] <- 17;
+  if '\n' >= 10 then {
+  while 10 <= 3 do x();
+  ;
+}
+}
+
+fun a(ref z, foo, d : char; i, i : char[24]; g, y : char[]; baz, bar, x : char) : int
+fun l() : int
+
+{
+  return;
+  ;
+  h(m(+ (((+ 4) * a))), h[(9 mod 33)], m());
+}
+
+
+{
+  if '\'' <= 20 then if 4 <= 14 then return; else {
+
+}
+  d((('7' * 42)));
+}
+
+fun j(i : int; ref l : char[][4][20]; foo, e, b : char[]) : nothing
+fun h(i, a, boo : int[37]; ref a, foo, h : char[][3]; ref e, baz : int[][37]; ref main, d : char[]) : nothing
+fun g(z : int[]) : nothing
+
+{
+  ;
+  return;
+  ;
+  if 10 = '7' then g((5)); else while 6 >= '\'' do ;
+  j <- l[31];
+}
+
+var c, c, bar : int[1];
+
+{
+  ;
+  ;
+  "bar" <- - '\'';
+}
+
+var m : int;
+var f, g : int[13];
+
+{
+  return j(('\''));
+  ;
+}
+
+
+{
+  {
+  if 38 >= '\n' then f <- 25;
+  if 29 < '\'' then return;
+  return baz;
+  d <- (1);
+}
+  if '\n' >= '7' then l <- 'a';
+  {
+  while 13 # 33 do if '\n' <= 28 then g('\''); else d();
+  while 12 >= 32 do {
+
+}
+  ;
+  {
+  j <- c();
+  {
+  {
+  while 41 < '\n' do {
+  ;
+}
+}
+}
+  {
+  {
+  ;
+  h <- i;
+}
+}
+}
+}
+  return n[23];
+  return a;
+}
+
+
+{
+  if 38 < 42 then foo <- 35;
+}

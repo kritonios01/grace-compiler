@@ -1,0 +1,32 @@
+fun b(ref e, baz, j : int[]) : nothing
+fun g() : int
+fun l(m, b, i : int[12]; main : int[][18]; ref m, b, g : int[]; h : int[][20]) : int;
+fun x(baz : int[][29]; ref b, x, h : char[][11]) : nothing
+fun y(m : int; ref j, baz : char) : nothing;
+fun m(i, d : char; ref boo, d : char[][20][9]; ref bar, c : char[38]) : char
+
+{
+  "Route66" <- n;
+}
+
+fun h(j, h : int; ref j, c, z : int[][40]) : int;
+
+{
+  ;
+  while 36 # 22 do d[15] <- 0;
+  ;
+}
+
+
+{
+  return;
+  {
+  ;
+}
+}
+
+
+{
+  while 'a' = 'a' do if '7' <= '\'' then bar <- '7';
+  b <- ('\'' mod 22);
+}
