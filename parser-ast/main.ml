@@ -5,5 +5,5 @@ let main =
     Printf.printf "Syntax OK!\n";
     exit 0
   with Parser.Error ->
-    Printf.eprintf "Syntax error\n";
+    Printf.eprintf "Syntax error at line %d \n" (!Lexer.num_lines + 1);
     exit 1
