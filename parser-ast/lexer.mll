@@ -1,7 +1,9 @@
 {
+  open Lexing
   open Parser
 
   let num_lines = ref 0
+  exception LexingError of string
 }
 
 (* definitions of useful regexps *)
@@ -14,7 +16,8 @@ let escseq         = '\\'  ('n' | 't' | 'r' | '0' | '\\' | '\'' | '\"' | ('x' he
 let letter = ['a'-'z' 'A'-'Z']
 let white  = [' ' '\t' '\r']
 
-(* NOTE: Counting lines works but probably not when there are multiline comments *)
+
+
 rule lexer = parse
   (* keywords *)
   | "and"     { T_and     }
@@ -76,15 +79,17 @@ rule lexer = parse
 
   (* Last options *)
   |  eof          { T_eof }
-  |  _ as c       { Printf.eprintf "Invalid character: '%c' (ascii: %d)\n" c (Char.code c); lexer lexbuf }
+  |  _            { raise (LexingError ("Illegal token: '" ^ lexeme lexbuf ^ "' at line " ^ (string_of_int (!num_lines + 1)))) }
 
 
 (* comment entrypoint catches single line comments. Triggered after a $ is detected *)
-and comment = shortest
-  | [^'\n']* '\n'       { incr num_lines; Printf.eprintf "SingleLineComment\n"; lexer lexbuf                    }
-  | _* '$' _*           { Printf.eprintf "Error on single line comment: Dual $\n"; lexer lexbuf }
+and comment = parse
+  | '\n'       { incr num_lines; lexer lexbuf }
+  | _          { comment lexbuf               }
 
 (* mcomment entrypoint catches multi line comments. Triggered after a $$ is detected *)
 and mcomment = parse
-  | [^ '$' '$']* "$$"   { Printf.eprintf "MultiLineComment\n"; lexer lexbuf                     }
-  | [^ '$' '$']*        { Printf.eprintf "Error on multiline comment\n"; lexer lexbuf           }
+  | "$$"       { lexer lexbuf                    }
+  | '\n'       { incr num_lines; mcomment lexbuf }
+  | _          { mcomment lexbuf                 }
+  | eof        { raise (LexingError "Reached EOF: Missing closing '$$'") }

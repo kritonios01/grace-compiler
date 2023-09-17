@@ -1,4 +1,6 @@
 fun hello () : nothing
 {
    writeString("Hello world!\n");
+    $ dir i $$ 
 }
+$

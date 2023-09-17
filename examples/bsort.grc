@@ -13,7 +13,7 @@ fun main () : nothing
       var changed, i : int;
       
    { $ bsort
-        changed <- 1;
+      changed <- 1;
       while changed > 0 do {
          changed <- 0;
          i <- 0;

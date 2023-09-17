@@ -13,7 +13,7 @@ parser.cmo parser.cmi: parser.ml parser.mli
 	ocamlc -c parser.mli parser.ml
 
 lexer.cmo lexer.cmi: lexer.ml
-	ocamlc -c lexer.ml
+	ocamlc -c lexer.mli lexer.ml
 
 main.cmo: main.ml
 	ocamlc -c main.ml
