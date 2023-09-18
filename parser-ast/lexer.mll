@@ -39,14 +39,14 @@ rule lexer = parse
   | "while"   { T_while   }
 
   (* names *)
-  | id                                    { T_id     }
+  | id                                    { T_id (lexeme lexbuf)    }
 
   (* int constants unsigned *)
-  | digit+                                { T_consti }
+  | digit+                                { T_consti (int_of_string (lexeme lexbuf)) }
   
   (* char and string constants *)
-  | '\'' (escseq | common_chars)  '\''    { T_constc }
-  | '\"' (escseq | common_chars)+ '\"'    { T_consts }
+  | '\'' (escseq | common_chars)  '\''    { T_constc (lexeme_char lexbuf 1) }
+  | '\"' (escseq | common_chars)+ '\"'    { T_consts (lexeme lexbuf) }
 
   (* symbolic operators *)
   | '+'       { T_plus      }

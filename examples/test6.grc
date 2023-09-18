@@ -1,0 +1,2 @@
+fun matrix_mult (ref a, b, c : int[10][10]) : nothing
+{}

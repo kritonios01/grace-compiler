@@ -18,7 +18,7 @@ rule lexer = parse
   | "then"   { T_then }
 
   | digit+   { T_const (int_of_string (lexeme lexbuf)) }
-  | letter   { T_var (lexeme lexbuf).[0] }
+  | letter   { T_var (lexeme lexbuf).[0] }    (* maybe this could be lexeme_char lexbuf 0 *)
 
   | '='      { T_eq }
   | '('      { T_lparen }

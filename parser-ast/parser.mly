@@ -62,69 +62,70 @@
 
 %%
 
-let program        := ~ = func_def ; T_eof ;                          <>
+let program        := ~ = func_def; T_eof;                            <>
 
-let func_def       := ~ = header ; ~ = local_def* ; ~ = block ;       < F_def >   //returns a tuple of these arguments
+let func_def       := ~ = header; ~ = local_def*; ~ = block;          < F_def >   //returns a tuple of these arguments
 
 (* functions and variables *)
-let header         := T_fun ; ~ = T_id ; "(" ; ~ = fpar_defs? ; ")" ; ":" ; ~ = ret_type ;  < F_head >   //function declaration
-let fpar_def       := ref = T_ref? ; id1 = T_id ; ids = more_ids* ; ":" ; type_ = fpar_type ;   { F_params (ref, id1::ids, type_)}    //function params
-let fpar_defs      := ~ = fpar_def; ~ = more_fpar_defs*;              { fpar_def::more_fpar_defs }    //helper
-let more_fpar_defs := ";"; ~ = fpar_def;                              { fpar_def }    //helper
+let header         := T_fun; ~ = T_id; "("; ~ = fpar_defs?; ")"; ":"; ~ = ret_type;        < F_head >   //function declaration
+let fpar_def       := ref = T_ref?; id1 = T_id; ids = more_ids*; ":"; type_ = fpar_type;   { F_params (ref, id1::ids, type_)}    //function params
+let fpar_defs      := par1 = fpar_def; pars = more_fpar_defs*;                             { par1::pars }    //helper
+let more_fpar_defs := ";"; ~ = fpar_def;                                                   { fpar_def }    //helper
 
-let local_def      := func_def ;                                          //local-defs inside a function (those appear before its body)
-                    | func_decl ;                                     
-                    | var_def ;                                       
+let local_def      := func_def                                                               //local-defs inside a function (those appear before its body)
+                    | func_decl                                     
+                    | var_def                                       
 
-let func_decl      := ~ = header ; ";" ;                                  < F_decl >
+let func_decl      := ~ = header; ";";                                                     < F_decl >
 
-let var_def        := T_var ; id1 = T_id ; ids = more_ids* ; ":" ; ~ = type_ ; ";" ;  { V_def (id1::ids, type_) }
+let var_def        := T_var; id1 = T_id; ids = more_ids*; ":"; ~ = type_; ";";             { V_def (id1::ids, type_) }
 
-let more_ids       := "," ; id = T_id ;                                    { id }    //helper
+let more_ids       := ","; id = T_id;                                                      { id }    //helper
 (*        *)
 
 (* All possible data types in grace *)
-let ret_type       := ~ = data_type ;                                  <>   //function return type
-                    | T_nothing ;                                     { Nothing }
+let ret_type       := ~ = data_type;                                 <>   //function return type
+                    | T_nothing;                                     { Nothing }
 
-let fpar_type      := t = data_type ; "[";"]"; dims = brackets* ;     { Data_type (t, 0::dims) }    //function params type
-                    | t = data_type ; dims = brackets* ;              < Data_type >
+let fpar_type      := t = data_type; "["; "]"; dims = brackets*;     { Data_type (t, 0::dims) }    //function params type
+                    | t = data_type; dims = brackets*;               < Data_type >
 
-let type_          := t = data_type ; dims = brackets* ;              < Data_type >    //variable type
+let type_          := t = data_type; dims = brackets*;               < Data_type >    //variable type
 
-let data_type      := T_int ;                                         { Int }    //helper
-                    | T_char ;                                        { Char }
+let data_type      := T_int;                                         { Int }    //helper
+                    | T_char;                                        { Char }
 
-let brackets       := "[" ; c = T_consti ; "]" ;                      { c }    //helper
+let brackets       := "["; c = T_consti; "]";                        { c }    //helper
 (*         *)
 
 
 
 
-let stmt           := ";";
-                    | ~ = l_value; "<-"; ~ = expr; ";";                    < S_assign >
-                    | block;                                               
-                    | ~ = func_call; ";";                                  <>
-                    | T_if; ~ = cond; T_then; ~ = stmt;                    < S_if >
-                    | T_if; ~ = cond; T_then; ~ = stmt; T_else; ~ = stmt;  < S_ifelse >
-                    | T_while; ~ = cond; T_do; ~ = stmt;                   < S_while >
-                    | T_return; ~ = expr?; ";";                            < S_return >
+let stmt           := ";";                                                  < S_colon >    //na to doume ligo ayto edw
+                    | ~ = l_value; "<-"; ~ = expr; ";";                     < S_assign >
+                    | block
+                    | ~ = func_call; ";";                                   <>
+                    | T_if; e = cond; T_then; s = stmt;                     < S_if >
+                    | T_if; e = cond; T_then; s1 = stmt; T_else; s2 = stmt; < S_ifelse >
+                    | T_while; e = cond; T_do; s = stmt;                    < S_while >
+                    | T_return; e = expr?; ";";                             < S_return >
 
-let l_value        := ~ = T_id;                                            < L_id >
-                    | ~ = T_consts;                                        < L_string >
-                    | ~ = l_value; "["; ~ = expr; "]";                     < L_matrix > 
+let l_value        := ~ = T_id;                                             < L_id >
+                    | ~ = T_consts;                                         < L_string >
+                    | ~ = l_value; "["; ~ = expr; "]";                      < L_matrix > 
 
-let block          := "{"; ~ = stmt*; "}";                                 < S_block >
+let block          := "{"; ~ = stmt*; "}";                                  < S_block >
 
-let func_call      := ~ = T_id; "("; ~ = exprs?; ")";                      < F_call >
-let exprs          := e = expr; es = more_exprs*;                          { e::es }    //helper
-let more_exprs     := ","; e = expr;                                       { e }    //helper
+let func_call      := ~ = T_id; "("; ~ = exprs?; ")";                       < F_call >
+// let func_call      := ~ = T_id; "("; ~ = exprs?; ")";                       <>
+let exprs          := e = expr; es = more_exprs*;                           { e::es }    //helper
+let more_exprs     := ","; e = expr;                                        { e }    //helper
 
 let expr           := ~ = T_consti;                   < E_int >
                     | ~ = T_constc;                   < E_char >
-                    | l_value;
+                    | l_value
                     | "("; ~ = expr; ")";             <>
-                    | func_call;
+                    | ~ = func_call;                  < E_fcall >
                     | "+"; e = expr;                  { E_op1 (Op_plus, e) }    //mipos ginei me inline?
                     | "-"; e = expr;                  { E_op1 (Op_minus, e) }
                     | e1 = expr; "+"; e2 = expr;      { E_op2 (e1, Op_plus, e2) }
@@ -134,12 +135,12 @@ let expr           := ~ = T_consti;                   < E_int >
                     | e1 = expr; "MOD"; e2 = expr;    { E_op2 (e1, Op_mod, e2) } 
         
 let cond           := "("; ~ = cond; ")";             <>
-                    | "NOT"; e = cond;                { E_bool1 (Op_not, e) }
-                    | e1 = cond; "AND"; e2 = cond;    { E_op2 (e1, Op_and, e2) }
-                    | e1 = cond; "OR"; e2 = cond;     { E_op2 (e1, Op_or, e2) }
-                    | e1 = expr; "="; e2 = expr;      { E_op2 (e1, Op_eq, e2) }
-                    | e1 = expr; "#"; e2 = expr;      { E_op2 (e1, Op_hash, e2) }
-                    | e1 = expr; "<"; e2 = expr;      { E_op2 (e1, Op_less, e2) }
-                    | e1 = expr; ">"; e2 = expr;      { E_op2 (e1, Op_greater, e2) }
-                    | e1 = expr; "<="; e2 = expr;     { E_op2 (e1, Op_lesseq, e2) }
-                    | e1 = expr; ">="; e2 = expr;     { E_op2 (e1, Op_greatereq, e2) }
+                    | "NOT"; e = cond;                { C_bool1 (Op_not, e) }
+                    | e1 = cond; "AND"; e2 = cond;    { C_bool2 (e1, Op_and, e2) }
+                    | e1 = cond; "OR"; e2 = cond;     { C_bool2 (e1, Op_or, e2) }
+                    | e1 = expr; "="; e2 = expr;      { C_bool2 (e1, Op_eq, e2) }
+                    | e1 = expr; "#"; e2 = expr;      { C_bool2 (e1, Op_hash, e2) }
+                    | e1 = expr; "<"; e2 = expr;      { C_bool2 (e1, Op_less, e2) }
+                    | e1 = expr; ">"; e2 = expr;      { C_bool2 (e1, Op_greater, e2) }
+                    | e1 = expr; "<="; e2 = expr;     { C_bool2 (e1, Op_lesseq, e2) }
+                    | e1 = expr; ">="; e2 = expr;     { C_bool2 (e1, Op_greatereq, e2) }

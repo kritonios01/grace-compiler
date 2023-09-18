@@ -1,0 +1,2 @@
+fun p3 (a, b : int; ref c : char) : nothing
+{}

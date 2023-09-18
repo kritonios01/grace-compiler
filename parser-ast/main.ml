@@ -1,7 +1,10 @@
+open Ast
+
 let main =
   let lexbuf = Lexing.from_channel stdin in
   try
-    Parser.program Lexer.lexer lexbuf;
+    let asts = Parser.program Lexer.lexer lexbuf in
+    printAST asts;
     Printf.printf "%d lines read.\n" !Lexer.num_lines;
     Printf.printf "Syntax OK!\n";
     exit 0

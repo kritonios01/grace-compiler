@@ -1,5 +1,3 @@
-open Printf
-
 type operator = 
   | Op_plus
   | Op_minus
@@ -27,33 +25,42 @@ type ast_datatypes =
 type ast_expr =
   | E_int of int
   | E_char of char
+  | L_id of string   (* edw paizetai: char list h string? *)
+  | L_string of string
+  | L_matrix of ast_expr * ast_expr
+  | E_fcall of ast_stmt
   | E_op1 of operator * ast_expr
   | E_op2 of ast_expr * operator * ast_expr
   | C_bool1 of operator * ast_expr
   | C_bool2 of ast_expr * operator * ast_expr
 
-type ast_lvalue =
-  | L_id of string   (* edw paizetai: char list h string? *)
+(* and ast_lvalue =
+  | L_id of string
   | L_string of string
-  | L_matrix of ast_lvalue * ast_expr
+  | L_matrix of ast_lvalue * ast_expr *)
 
-type ast_params =
-  | F_params of bool * string list * ast_datatypes       (* bool->ref? string->ids ast_ptype->ptype *)
+and ast_params =
+  | F_params of unit option * string list * ast_datatypes
 
-type ast_header = F_head of string * ast_params list * ast_type (* string->id ast_params->F_params ast_return einai to return type ths f *)
+(* type option =
+  | Some of ast_params list
+  | None *)
+
+and ast_header = F_head of string * ast_params list option * ast_type
 
 and ast_stmt =
   | F_def of ast_header * ast_stmt list * ast_stmt   (* ast_stmt -> f_def, f_decl, v_def *)
   | F_decl of ast_header
-  | F_call of string * ast_expr list
+  | F_call of string * ast_expr list option
   | V_def of string list * ast_datatypes     (* ast_params->Vparams *)
 
-  | S_assign of ast_lvalue * ast_expr
+  | S_colon of unit
+  | S_assign of ast_expr * ast_expr
   | S_block of ast_stmt list
   | S_if of ast_expr * ast_stmt
   | S_ifelse of ast_expr * ast_stmt * ast_stmt
   | S_while of ast_expr * ast_stmt
-  | S_return of ast_expr
+  | S_return of ast_expr option
 
 
 
@@ -101,47 +108,72 @@ let rec expr_string ast =
   match ast with
   | E_int e               -> string_of_int e
   | E_char e              -> Char.escaped e      (* prepei na testaristei to escaped *)
+  | L_id s                -> s
+  | L_string s            -> s
+  | L_matrix (l, e)       -> expr_string l ^ expr_string e
+  | E_fcall s             -> "EXPR[" ^ stmt_string s ^ "]"
   | E_op1 (op, e)         -> ops_string op ^ expr_string e
   | E_op2 (e1, op, e2)    -> expr_string e1 ^ ops_string op ^ expr_string e2
   | C_bool1 (op, e)       -> ops_string op ^ expr_string e
   | C_bool2 (e1, op, e2)  -> expr_string e1 ^ ops_string op ^ expr_string e2
 
-let rec lvalue_string ast =
+(* and lvalue_string ast =
   match ast with
   | L_id s          -> s
   | L_string s      -> s
-  | L_matrix (l, e) -> lvalue_string l ^ expr_string e
+  | L_matrix (l, e) -> lvalue_string l ^ expr_string e *)
 
-let params_string ast = 
+
+
+and params_string ast = 
   match ast with
-  | F_params (ref, ids, type_) -> let ref = if ref then "ref" else "noref"
+  | F_params (ref, ids, type_) -> let ref = match ref with
+                                            | Some x -> "ref" (*if ref then "ref" else "noref"*)
+                                            | None   -> "noref"
                                       and ids = list_to_string ids
                                       and type_ = datatype_string type_ 
-                                  in ref ^ " [" ^ ids ^ ": " ^ type_ ^ "]"
+                                  in ref ^ " [" ^ ids ^ "] " ^ type_
 
-let rec header_string ast =
+and poption_string ast =
   match ast with
-  | F_head (id, params, ret) -> let paramAST = let list = List.map params_string params in list_to_string list
-                                    and retAST = type_string ret
-                                in id ^ ": " ^ paramAST ^ ": " ^ retAST
-                              (* in printf "%s : [%s] : %s)" id paramAST retAST *)
+  | Some x  -> let list = List.map params_string x in "PARAMS(" ^ list_to_string list ^ ")"
+  | None    -> "NOPARAMS" 
 
-let rec stmt_string ast =
+and header_string ast =
   match ast with
-  | F_def (h, l, block)  -> let s = List.map stmt_string l in "FUNC(" ^ header_string h ^ list_to_string s ^ stmt_string block ^ ")"
+  | F_head (id, params, ret) -> let params = poption_string params
+                                    and ret = type_string ret
+                                in id ^ ": " ^ params ^ ": " ^ ret
+
+
+and retoption_string ast =
+  match ast with
+  | Some x  -> expr_string x
+  | None    -> "NOEXPR"
+
+and exproption_string ast =
+  match ast with
+  | Some x -> let list = List.map expr_string x in list_to_string list
+  | None   -> "NOEXPRS"
+
+
+and stmt_string ast =
+  match ast with
+  | F_def (h, l, block)  -> let s = List.map stmt_string l in "FUNC[(" ^ header_string h ^ "), LOCAL-DEFS(" ^ list_to_string s ^ "), " ^ stmt_string block ^ "]"
   | F_decl h             -> "F_DECL(" ^ header_string h ^ ")"
-  | F_call (id, e)       -> let s = List.map expr_string e in "F_CALL(" ^ id ^ list_to_string s ^ ")" 
+  | F_call (id, e)       -> "F_CALL(" ^ id ^ ", " ^ exproption_string e ^ ")"
   | V_def (ids, t)       -> "VARs(" ^ list_to_string ids ^ ") of type " ^ datatype_string t
-  | S_assign (l, e)      -> "ASSIGN(" ^ lvalue_string l ^ ", " ^ expr_string e ^ ")"
+  | S_colon u             -> ";"
+  | S_assign (l, e)      -> "ASSIGN(" ^ expr_string l ^ ", " ^ expr_string e ^ ")"
   | S_block l            -> let s = List.map stmt_string l in "BLOCK(" ^ list_to_string s ^ ")"
   | S_if (e, s)          -> "IF(" ^ expr_string e ^ ") -> " ^ stmt_string s
   | S_ifelse (e, s1, s2) -> "IF(" ^ expr_string e ^ ") -> " ^ stmt_string s1 ^ ": ELSE -> " ^ stmt_string s2
   | S_while (e, s)       -> "WHILE(" ^ expr_string e ^ ") -> " ^ stmt_string s
-  | S_return e           -> "RETURN" ^ expr_string e
+  | S_return e           -> "RETURN(" ^ retoption_string e ^ ")"
 
 
 
-let rec printAST asts =
-  match asts with
+let rec printAST asts = Printf.printf "%s\n\n" (stmt_string asts)
+  (* match asts with
   | []       -> ()
-  | (h::t)   -> let s = stmt_string h in printf "%s" s ; printAST t
+  | (h::t)   -> let s = stmt_string h in Printf.printf "%s" s ; printAST t *)
