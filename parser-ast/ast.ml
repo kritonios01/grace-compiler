@@ -34,17 +34,8 @@ type ast_expr =
   | C_bool1 of operator * ast_expr
   | C_bool2 of ast_expr * operator * ast_expr
 
-(* and ast_lvalue =
-  | L_id of string
-  | L_string of string
-  | L_matrix of ast_lvalue * ast_expr *)
-
 and ast_params =
   | F_params of unit option * string list * ast_datatypes
-
-(* type option =
-  | Some of ast_params list
-  | None *)
 
 and ast_header = F_head of string * ast_params list option * ast_type
 
@@ -62,10 +53,7 @@ and ast_stmt =
   | S_while of ast_expr * ast_stmt
   | S_return of ast_expr option
 
-
-
-
-
+(* --------------------------------------------------------------------------------------------------- *)
 
 (* helper function: converts a string list to comma-seperated values string *)
 let rec list_to_string l =
@@ -74,9 +62,7 @@ let rec list_to_string l =
   | [a] -> a
   | (h::t) -> h ^ ", " ^ (list_to_string t)
 
-
-
-
+(* Constructors *)
 let ops_string ast =
   match ast with
   | Op_plus      -> "+"
@@ -117,14 +103,6 @@ let rec expr_string ast =
   | C_bool1 (op, e)       -> ops_string op ^ expr_string e
   | C_bool2 (e1, op, e2)  -> expr_string e1 ^ ops_string op ^ expr_string e2
 
-(* and lvalue_string ast =
-  match ast with
-  | L_id s          -> s
-  | L_string s      -> s
-  | L_matrix (l, e) -> lvalue_string l ^ expr_string e *)
-
-
-
 and params_string ast = 
   match ast with
   | F_params (ref, ids, type_) -> let ref = match ref with
@@ -144,7 +122,6 @@ and header_string ast =
   | F_head (id, params, ret) -> let params = poption_string params
                                     and ret = type_string ret
                                 in id ^ ": " ^ params ^ ": " ^ ret
-
 
 and retoption_string ast =
   match ast with
@@ -172,8 +149,4 @@ and stmt_string ast =
   | S_return e           -> "RETURN(" ^ retoption_string e ^ ")"
 
 
-
 let rec printAST asts = Printf.printf "%s\n\n" (stmt_string asts)
-  (* match asts with
-  | []       -> ()
-  | (h::t)   -> let s = stmt_string h in Printf.printf "%s" s ; printAST t *)

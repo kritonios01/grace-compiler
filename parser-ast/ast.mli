@@ -34,17 +34,8 @@ type ast_expr =
   | C_bool1 of operator * ast_expr
   | C_bool2 of ast_expr * operator * ast_expr
 
-(* and ast_lvalue =
-  | L_id of string
-  | L_string of string
-  | L_matrix of ast_lvalue * ast_expr *)
-
 and ast_params =
   | F_params of unit option * string list * ast_datatypes
-
-(* type option =
-  | Some of ast_params list
-  | None *)
 
 and ast_header = F_head of string * ast_params list option * ast_type
 
