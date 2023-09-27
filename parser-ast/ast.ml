@@ -96,7 +96,7 @@ let rec expr_string ast =
   | E_char e              -> Char.escaped e      (* prepei na testaristei to escaped *)
   | L_id s                -> s
   | L_string s            -> s
-  | L_matrix (l, e)       -> expr_string l ^ expr_string e
+  | L_matrix (l, dims)    -> expr_string l ^ "[" ^ expr_string dims ^ "]"
   | E_fcall s             -> "EXPR[" ^ stmt_string s ^ "]"
   | E_op1 (op, e)         -> ops_string op ^ expr_string e
   | E_op2 (e1, op, e2)    -> expr_string e1 ^ ops_string op ^ expr_string e2
