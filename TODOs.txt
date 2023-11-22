@@ -9,3 +9,4 @@ na paijei me to kainourio api (generated api)
 na to ftiaxw na trexei me ocamlopt kai oxi ocamlc
 na petaei katallila errors analoga to lexing h to parsing (to lexing den exei errors) kai na leei se poia grammi einai
 
+στον lexer τα common_chars μηπως πρέπει να συμπεριλαμβάνουν ολες τις τιμες? (να μην εξαιρονται τα αυτακια κτλ)
