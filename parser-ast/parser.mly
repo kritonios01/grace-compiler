@@ -72,7 +72,7 @@ let fpar_def       := ref = T_ref?; id1 = T_id; ids = more_ids*; ":"; type_ = fp
 let fpar_defs      := par1 = fpar_def; pars = more_fpar_defs*;                             { par1::pars }    //helper
 let more_fpar_defs := ";"; ~ = fpar_def;                                                   { fpar_def }    //helper
 
-let local_def      := func_def                                                               //local-defs inside a function (those appear before its body)
+let local_def      := func_def                                                               //any of these can are simply replaced according to their corresponding rule, without the need of a semantic action
                     | func_decl                                     
                     | var_def                                       
 
