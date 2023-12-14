@@ -149,4 +149,5 @@ and stmt_string ast =
   | S_return e           -> "RETURN(" ^ retoption_string e ^ ")"
 
 
-let rec printAST asts = Printf.printf "%s\n\n" (stmt_string asts)
+let printAST asts = 
+  Printf.printf "%s\n\n" (stmt_string asts)

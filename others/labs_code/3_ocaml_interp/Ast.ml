@@ -1,3 +1,5 @@
+(* We treat all vars as globals. Also, remember that var a states that a will be defined later and the definition happens with S_let *)
+
 type var  = char   (* to var einai onoma metavlitis you programmatos*)
 type oper = O_plus | O_minus | O_times
 
