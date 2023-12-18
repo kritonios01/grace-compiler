@@ -1,3 +1,6 @@
+type var =
+  string
+
 type operator = 
   | Op_plus
   | Op_minus

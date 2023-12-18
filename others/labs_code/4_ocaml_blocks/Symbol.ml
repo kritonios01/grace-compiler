@@ -14,6 +14,7 @@ let get_offset se =
   match se with
   | SE (t, ofs) -> ofs
 
+(* --------------- *)
 type symbol_scope =
 | SC of (var * symbol_entry) list ref * int ref
 
@@ -70,3 +71,6 @@ let lookup st x =
 let insert st x t =
   match st with
   | ST scopes -> scope_insert (List.hd !scopes) x t
+
+
+  (* we raise the offset everytime we add an entry to the symbol table, this is done through seperate scopes *)

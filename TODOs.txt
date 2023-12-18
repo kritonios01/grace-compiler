@@ -10,3 +10,7 @@ na to ftiaxw na trexei me ocamlopt kai oxi ocamlc
 na petaei katallila errors analoga to lexing h to parsing (to lexing den exei errors) kai na leei se poia grammi einai
 
 στον lexer τα common_chars μηπως πρέπει να συμπεριλαμβάνουν ολες τις τιμες? (να μην εξαιρονται τα αυτακια κτλ)
+
+- Ta types na ginoun ena type (symfwna me to implementation in ML vivlio + to types.ml tou papaspyrou)
+- na dw apo to github gia ligo kalyterh organwsh tou parser
+- na ftiaxw to makefile
