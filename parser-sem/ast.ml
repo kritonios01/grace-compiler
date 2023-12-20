@@ -17,57 +17,59 @@ type operator =
   | Op_greater
   | Op_greatereq
 
-type ast_type = (* helper for S_return *)
-  | Int
-  | Char
-  | Nothing
+type typ =
+  | TY_int
+  | TY_char
+  | TY_none
+  | TY_array of typ * int list (* list is for dimensions *)
 
-type ast_datatypes =
-  | Data_type of ast_type * int list
+type boolean =
+  | True
+  | False
 
 type ast_expr =
-  | E_int of int
-  | E_char of char
-  | L_id of string   (* edw paizetai: char list h string? *)
-  | L_string of string
-  | L_matrix of ast_expr * ast_expr
-  | E_fcall of ast_stmt
+  | E_int_const of int
+  | E_char_const of char
+  | L_string_lit of string
+  | L_id of var
+  | L_matrix of ast_expr * ast_expr (* first expr is an l-value *)
+  | E_fcall of ast_stmt   (* stmt must be S_fcall (or it should be of the same type as S_fcall) *)
   | E_op1 of operator * ast_expr
   | E_op2 of ast_expr * operator * ast_expr
-  | C_bool1 of operator * ast_expr
-  | C_bool2 of ast_expr * operator * ast_expr
 
-and ast_params =
-  | F_params of unit option * string list * ast_datatypes
+and ast_cond =
+  | C_bool1 of operator * ast_cond
+  | C_bool2 of ast_cond * operator * ast_cond
+  | C_expr of ast_expr  * operator * ast_expr
 
-and ast_header = 
-  | F_head of string * ast_params list option * ast_type
+and ast_decl =
+  | F_params of unit option * var list * typ
+  | F_head of var * ast_decl list option * typ  (* decl must be f_params*)
+  | F_def of ast_decl * ast_decl list * ast_stmt   (* decl must be f_head, ast_decl -> f_def, f_decl, v_def *)
+  | F_decl of ast_decl (* decl must be f_head *)
+  | V_def of var list * typ     (* ast_params->Vparams *)
 
 and ast_stmt =
-  | F_def of ast_header * ast_stmt list * ast_stmt   (* ast_stmt -> f_def, f_decl, v_def *)
-  | F_decl of ast_header
-  | F_call of string * ast_expr list option
-  | V_def of string list * ast_datatypes     (* ast_params->Vparams *)
-
+  | S_fcall of string * ast_expr list option
   | S_colon of unit
-  | S_assign of ast_expr * ast_expr
+  | S_assign of ast_expr * ast_expr (* first expr must l-value *)
   | S_block of ast_stmt list
-  | S_if of ast_expr * ast_stmt
-  | S_ifelse of ast_expr * ast_stmt * ast_stmt
-  | S_while of ast_expr * ast_stmt
+  | S_if of ast_cond * ast_stmt
+  | S_ifelse of ast_cond * ast_stmt * ast_stmt
+  | S_while of ast_cond * ast_stmt
   | S_return of ast_expr option
 
 (* --------------------------------------------------------------------------------------------------- *)
 
 (* helper function: converts a string list to comma-seperated values string *)
-let rec list_to_string l =
+(* let rec list_to_string l =
   match l with
   | [] -> ""
   | [a] -> a
-  | (h::t) -> h ^ ", " ^ (list_to_string t)
+  | (h::t) -> h ^ ", " ^ (list_to_string t) *)
 
 (* Constructors *)
-let ops_string ast =
+(* let ops_string ast =
   match ast with
   | Op_plus      -> "+"
   | Op_minus     -> "-"
@@ -150,8 +152,8 @@ and stmt_string ast =
   | S_if (e, s)          -> "IF(" ^ expr_string e ^ ") -> " ^ stmt_string s
   | S_ifelse (e, s1, s2) -> "IF(" ^ expr_string e ^ ") -> " ^ stmt_string s1 ^ ": ELSE -> " ^ stmt_string s2
   | S_while (e, s)       -> "WHILE(" ^ expr_string e ^ ") -> " ^ stmt_string s
-  | S_return e           -> "RETURN(" ^ retoption_string e ^ ")"
+  | S_return e           -> "RETURN(" ^ retoption_string e ^ ")" *)
 
 
-let printAST asts = 
-  Printf.printf "%s\n\n" (stmt_string asts)
+let printAST (*asts*) = 
+  Printf.printf "%s\n\n" "OOOK"(*(stmt_string asts)*)

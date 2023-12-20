@@ -56,7 +56,7 @@
 
 
 
-%start <ast_stmt> program
+%start <ast_decl> program
 
 %%
 
@@ -66,7 +66,7 @@ let func_def       := ~ = header; ~ = local_def*; ~ = block;          < F_def > 
 
 (* functions and variables *)
 let header         := T_fun; ~ = T_id; "("; ~ = fpar_defs?; ")"; ":"; ~ = ret_type;        < F_head >   //function declaration
-let fpar_def       := ref = T_ref?; id1 = T_id; ids = more_ids*; ":"; type_ = fpar_type;   { F_params (ref, id1::ids, type_)}    //function params
+let fpar_def       := ref = T_ref?; id1 = T_id; ids = more_ids*; ":"; typ = fpar_type;     { F_params (ref, id1::ids, typ)}    //function params
 let fpar_defs      := par1 = fpar_def; pars = more_fpar_defs*;                             { par1::pars }    //helper
 let more_fpar_defs := ";"; ~ = fpar_def;                                                   { fpar_def }    //helper
 
@@ -83,15 +83,15 @@ let more_ids       := ","; id = T_id;                                           
 
 (* All possible data types in grace *)
 let ret_type       := ~ = data_type;                                 <>   //function return type
-                    | T_nothing;                                     { Nothing }
+                    | T_nothing;                                     { TY_none }
 
-let fpar_type      := t = data_type; "["; "]"; dims = brackets*;     { Data_type (t, 0::dims) }    //function params type
-                    | t = data_type; dims = brackets*;               < Data_type >
+let fpar_type      := t = data_type; "["; "]"; dims = brackets*;     { TY_array (t, 0::dims) }    //function params type
+                    | t = data_type; dims = brackets*;               < TY_array >
 
-let type_          := t = data_type; dims = brackets*;               < Data_type >    //variable type
+let type_          := t = data_type; dims = brackets*;               < TY_array >    //variable type
 
-let data_type      := T_int;                                         { Int }    //helper
-                    | T_char;                                        { Char }
+let data_type      := T_int;                                         { TY_int }    //helper
+                    | T_char;                                        { TY_char }
 
 let brackets       := "["; c = T_consti; "]";                        { c }    //helper
 (*         *)
@@ -109,18 +109,18 @@ let stmt           := ";";                                                  < S_
                     | T_return; e = expr?; ";";                             < S_return >
 
 let l_value        := ~ = T_id;                                             < L_id >
-                    | ~ = T_consts;                                         < L_string >
+                    | ~ = T_consts;                                         < L_string_lit >
                     | ~ = l_value; "["; ~ = expr; "]";                      < L_matrix > 
 
 let block          := "{"; ~ = stmt*; "}";                                  < S_block >
 
-let func_call      := ~ = T_id; "("; ~ = exprs?; ")";                       < F_call >
+let func_call      := ~ = T_id; "("; ~ = exprs?; ")";                       < S_fcall >
 // let func_call      := ~ = T_id; "("; ~ = exprs?; ")";                       <>
 let exprs          := e = expr; es = more_exprs*;                           { e::es }    //helper
 let more_exprs     := ","; e = expr;                                        { e }    //helper
 
-let expr           := ~ = T_consti;                   < E_int >
-                    | ~ = T_constc;                   < E_char >
+let expr           := ~ = T_consti;                   < E_int_const >
+                    | ~ = T_constc;                   < E_char_const >
                     | l_value
                     | "("; ~ = expr; ")";             <>
                     | ~ = func_call;                  < E_fcall >
@@ -136,9 +136,9 @@ let cond           := "("; ~ = cond; ")";             <>
                     | "NOT"; e = cond;                { C_bool1 (Op_not, e) }
                     | e1 = cond; "AND"; e2 = cond;    { C_bool2 (e1, Op_and, e2) }
                     | e1 = cond; "OR"; e2 = cond;     { C_bool2 (e1, Op_or, e2) }
-                    | e1 = expr; "="; e2 = expr;      { C_bool2 (e1, Op_eq, e2) }
-                    | e1 = expr; "#"; e2 = expr;      { C_bool2 (e1, Op_hash, e2) }
-                    | e1 = expr; "<"; e2 = expr;      { C_bool2 (e1, Op_less, e2) }
-                    | e1 = expr; ">"; e2 = expr;      { C_bool2 (e1, Op_greater, e2) }
-                    | e1 = expr; "<="; e2 = expr;     { C_bool2 (e1, Op_lesseq, e2) }
-                    | e1 = expr; ">="; e2 = expr;     { C_bool2 (e1, Op_greatereq, e2) }
+                    | e1 = expr; "="; e2 = expr;      { C_expr (e1, Op_eq, e2) }
+                    | e1 = expr; "#"; e2 = expr;      { C_expr (e1, Op_hash, e2) }
+                    | e1 = expr; "<"; e2 = expr;      { C_expr (e1, Op_less, e2) }
+                    | e1 = expr; ">"; e2 = expr;      { C_expr (e1, Op_greater, e2) }
+                    | e1 = expr; "<="; e2 = expr;     { C_expr (e1, Op_lesseq, e2) }
+                    | e1 = expr; ">="; e2 = expr;     { C_expr (e1, Op_greatereq, e2) }
