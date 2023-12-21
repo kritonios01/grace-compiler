@@ -23,6 +23,9 @@ type typ =
   | TY_none
   | TY_array of typ * int list
 
+type boolean =
+  | TY_bool of bool
+
 type ast_expr =
   | E_int_const of int
   | E_char_const of char

@@ -21,11 +21,10 @@ type typ =
   | TY_int
   | TY_char
   | TY_none
-  | TY_array of typ * int list (* list is for dimensions *)
+  | TY_array of typ * int list (* list is for dimensions (so bounds as well!) (each entry of the list is a dimension and its value is the bound)*)
 
 type boolean =
-  | True
-  | False
+  | TY_bool of bool
 
 type ast_expr =
   | E_int_const of int
