@@ -1,25 +1,32 @@
-# parser target is provided first so that make knows it is the final target
-parser: ast.cmo parser.cmo lexer.cmo main.cmo
-	ocamlc -o parser ast.cmo parser.cmo lexer.cmo main.cmo
+OCAMLC=ocamlc             #ocamlc or ocamlopt
+OCAMLDEP=ocamldep
+FLAGS=#                    #-g for debugging
 
-# These rules are provided in the order they should be compiled (if they were to be compiled by hand)
+
+# Rules for OCaml files
+%.cmo: %.ml %.mli
+	$(OCAMLC) $(FLAG	S) -c $<
+
+%.cmi: %.mli
+	$(OCAMLC) $(FLAGS) -c $<
+
+%.cmo %.cmi: %.ml
+	$(OCAMLC) $(OCAMLC_FLAGS) -c $<
+
+%.cmx: %.ml
+	$(OCAMLC) $(FLAGS) -c $<
+
+
+# Rules to produce .ml files from ocamllex and menhir. parser is the final target
+parser: ast.cmo parser.cmo lexer.cmo main.cmo
+	$(OCAMLC) $(FLAGS) -o $@ $^
+
 lexer.ml: lexer.mll
 	ocamllex lexer.mll
-
-ast.cmo ast.cmi: ast.ml ast.mli
-	ocamlc -c ast.mli ast.ml
 
 parser.ml parser.mli: parser.mly ast.cmi
 	menhir --infer parser.mly
 
-parser.cmo parser.cmi: parser.ml parser.mli ast.cmi
-	ocamlc -c parser.mli parser.ml
-
-lexer.cmo lexer.cmi: lexer.ml parser.ml
-	ocamlc -c lexer.mli lexer.ml
-
-main.cmo: main.ml
-	ocamlc -c main.ml
 
 
 .PHONY: clean distclean
@@ -29,4 +36,9 @@ clean:
 	-rm *.cmi *cmo lexer.ml parser.mli parser.ml
 #removes all files produced by the rules above
 distclean: clean
-	rm parser
+	rm parser .depend
+
+depend: lexer.ml parser.ml parser.mli
+	$(OCAMLDEP) $(INCLUDES) *.mli *.ml > .depend
+
+-include .depend

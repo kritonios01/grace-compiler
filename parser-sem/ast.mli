@@ -24,7 +24,7 @@ type typ =
   | TY_array of typ * int list
 
 type boolean =
-  | TY_bool of bool
+  | TY_bool
 
 type ast_expr =
   | E_int_const of int
@@ -49,7 +49,7 @@ and ast_decl =
   | V_def of var list * typ
 
 and ast_stmt =
-  | S_fcall of string * ast_expr list option
+  | S_fcall of var * ast_expr list option
   | S_colon of unit
   | S_assign of ast_expr * ast_expr
   | S_block of ast_stmt list

@@ -2,12 +2,10 @@ type symbol =
   string
 
 type env_entry =
-  | IntEntry of int option
-  | CharEntry of char option
-  | IntArrayEntry of int list * int list (* list1 is dimensions, list2 is values *)
-  | CharArrayEntry of int list * char list (* list1 is dimensions, list2 is values *)
-  | NoneEntry
-  | FunEntry of Ast.typ * env_entry list 
+  | IntEntry
+  | CharEntry
+  | ArrayEntry of Ast.typ * int list (* * int list*) (* list1 is dimensions, list2 is values *)
+  | FunEntry of Ast.typ * Ast.typ list (* string -> ref or noref *)
   (* | FunEntry of  *)
 
 exception Symbol of symbol
