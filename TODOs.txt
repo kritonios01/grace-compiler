@@ -13,4 +13,5 @@ na petaei katallila errors analoga to lexing h to parsing (to lexing den exei er
 
 - Ta types na ginoun ena type (symfwna me to implementation in ML vivlio + to types.ml tou papaspyrou)
 - na dw apo to github gia ligo kalyterh organwsh tou parser
-- na ftiaxw to makefile
+
+- shmasiologikh analysi leipei to check gia duplicate variable (na dw kai apo vivlio)

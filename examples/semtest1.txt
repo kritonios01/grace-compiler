@@ -1,0 +1,12 @@
+fun solve () : nothing
+
+   fun hanoi (rings : int; target, auxiliary : char[5]) : nothing
+
+   { $ hanoi
+      if rings >= 1 then {
+         hanoi(rings-1, source, auxiliary, target);
+         move(source, target);
+         hanoi(rings-1, auxiliary, target, source);
+      }
+   } $ hanoi
+{}

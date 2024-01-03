@@ -2,9 +2,10 @@ let main =
   let lexbuf = Lexing.from_channel stdin in
   try
     let asts = Parser.program Lexer.lexer lexbuf in
-    Ast.printAST (*asts*);
+    let _ = Semantic.sem_ast asts in
     Printf.printf "%d lines read.\n" !Lexer.num_lines;
     Printf.printf "Syntax OK!\n";
+    Printf.printf "Semantics OK!\n";
     exit 0
   with 
   | Parser.Error -> (* this is an error raised by the parser *)
@@ -13,3 +14,7 @@ let main =
   | Lexer.LexingError e -> (* this is an error raised by the lexer *)
       Printf.eprintf "%s\n" e;
       exit 1
+  | Semantic.TypeError s ->
+      Printf.eprintf "Type error: %s\n" s;
+  | Symbol.SymbolExc (sym, s) ->
+      Printf.eprintf "%s: %s\n" s sym;

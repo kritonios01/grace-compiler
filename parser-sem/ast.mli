@@ -58,4 +58,4 @@ and ast_stmt =
   | S_while of ast_cond * ast_stmt
   | S_return of ast_expr option
 
-val printAST : (*ast_stmt ->*) unit
+(* val printAST : ast_stmt -> unit *)

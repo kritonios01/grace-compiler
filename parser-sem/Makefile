@@ -18,7 +18,7 @@ FLAGS=#                    #-g for debugging
 
 
 # Rules to produce .ml files from ocamllex and menhir. parser is the final target
-parser: ast.cmo parser.cmo lexer.cmo main.cmo
+semantic: ast.cmo parser.cmo lexer.cmo symbol.cmo semantic.cmo main.cmo
 	$(OCAMLC) $(FLAGS) -o $@ $^
 
 lexer.ml: lexer.mll
@@ -36,7 +36,7 @@ clean:
 	-rm *.cmi *cmo lexer.ml parser.mli parser.ml
 #removes all files produced by the rules above
 distclean: clean
-	rm parser .depend
+	rm semantic .depend
 
 depend: lexer.ml parser.ml parser.mli
 	$(OCAMLDEP) $(INCLUDES) *.mli *.ml > .depend

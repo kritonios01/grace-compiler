@@ -86,10 +86,14 @@ let ret_type       := ~ = data_type;                                 <>   //func
                     | T_nothing;                                     { TY_none }
 
 let fpar_type      := t = data_type; "["; "]"; dims = brackets*;     { TY_array (t, 0::dims) }    //function params type
-                    | t = data_type; dims = brackets*;               < TY_array >
+                    | t = data_type; dims = brackets+;               < TY_array >
+                    | T_int;                                         { TY_int }
+                    | T_char;                                        { TY_char }
 
-let type_          := t = data_type; dims = brackets*;               < TY_array >    //variable type
-
+let type_          := t = data_type; dims = brackets+;               < TY_array >    //variable type
+                    | T_int;                                         { TY_int }    //helper
+                    | T_char;                                        { TY_char }
+                    
 let data_type      := T_int;                                         { TY_int }    //helper
                     | T_char;                                        { TY_char }
 

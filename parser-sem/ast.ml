@@ -154,5 +154,5 @@ and stmt_string ast =
   | S_return e           -> "RETURN(" ^ retoption_string e ^ ")" *)
 
 
-let printAST (*asts*) = 
-  Printf.printf "%s\n\n" "OOOK"(*(stmt_string asts)*)
+(* let printAST (*asts*) = 
+  Printf.printf "%s\n\n" "OOOK"(stmt_string asts) *)
