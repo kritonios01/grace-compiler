@@ -29,7 +29,7 @@ let lookupST k mapping =
   let entry = SymbolTable.find_opt k mapping in
     match entry with
     | Some value -> value
-    | None       -> raise (SymbolExc (k, "Unknown variable"))
+    | None       -> raise (SymbolExc (k, "Unknown variable/function"))
 
     let rec list_to_string l =
       match l with

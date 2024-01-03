@@ -20,3 +20,20 @@ na petaei katallila errors analoga to lexing h to parsing (to lexing den exei er
 - mporei na dhmiourgei ena neo environment (apo to mhden) gia ta local-defs kai otan teleiwsoun ta local-defs na to kanei merge (h union) me to arxiko. etsi tha mporw na tsekarw gia duplicate variable dhl an jana orizetai mia metavliti mesa sta local-defs
 
 - prepei na tsekarw ola ta erroneous gia semantic-analysis (very useful)
+ta erroneous pou den pianei h semantic anaylsis:
+arraybyvalue.grc
+doublevar.grc (ayto thelei skepsi genikotera
+errorcode.grc
+ifaelseb.grc
+issorted.grc
+notwhatiwanted.grc 
+paramtypehavoc.grc   -> edw to pianei o semantic analyzer alla oxi gia to logo pou prepei. 				agnoeitai to decl tou compare kai to compare mpainei sto ST me params
+			int kai int. o semantic analyzer diamartyretai gia thn deyterh klhsh ths
+			compare h opoia einai me chars gia parameters
+redefine.c
+returntypehavoc.grc
+stringassign.grc    -> na dw thn entolh anathesis ti prepei na dexetai...
+undeffunc.grc
+zeroisarrays.grc
+
+

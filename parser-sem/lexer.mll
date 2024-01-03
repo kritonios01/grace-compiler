@@ -46,7 +46,7 @@ rule lexer = parse
   
   (* char and string constants *)
   | '\'' (escseq | common_chars)  '\''    { T_constc (lexeme_char lexbuf 1) }
-  | '\"' (escseq | common_chars)+ '\"'    { T_consts (lexeme lexbuf) }
+  | '\"' (escseq | common_chars)* '\"'    { T_consts (lexeme lexbuf) }
 
   (* symbolic operators *)
   | '+'       { T_plus      }

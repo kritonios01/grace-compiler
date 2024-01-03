@@ -50,16 +50,18 @@ let rec sem_expr env expr =
                             (match t2 with
                             | TY_int -> (*t1 *)    (* needs checking for 2+ dims*) (* here check for index out of bounds, difficult currently... have to have values for ints *)
                                         (match t1 with
-                                        | TY_array (t, dims) -> t 
-                                        | _                  -> t1 (*raise (TypeError "Accessing a non-array var as an aray"))*))
+                                        | TY_array (t, dims) -> t
+                                        | TY_int
+                                        | TY_char            -> raise (TypeError "Using a variable of type int or char as an array")
+                                        | _                  -> t1)
                             | _      -> raise (TypeError "index of array/matrix is not an int"))
   | E_fcall stmt   -> (match stmt with
                       | S_fcall (name, ps) -> let func = lookupST name env in
                                               let types = match ps with
                                                           | Some es -> List.map (sem_expr env) es
                                                           | None    -> [] in
-                                              (* Printf.printf "%s\n" name; *)
-                                              
+                                              (* Printf.printf "%s\n" name;
+                                              printST env; *)
                                               (match func with 
                                               | FunEntry (t, params) -> if custom_checklist types params then t else raise (TypeError "Wrong parameters were given to function when called")
                                               | _               -> raise (TypeError (name ^ " is a variable, not a function")))
@@ -182,7 +184,7 @@ let rec sem_decl env decl =
 
 and sem_localdef env local =
   match local with
-  | F_def (h, locals, block) -> let henv = sem_decl env (F_decl h) in
+  | F_def (h, locals, block) -> let henv = sem_decl env (F_decl h) in (*we return the environment which includes the bindings of the func definition but we ignore its local-bindings as they are not visible to the program outside this func-def *)
                                 let _ = sem_decl env (F_def (h, locals, block)) in
                                 henv
   | F_decl h                 -> sem_decl env (F_decl h)
@@ -199,13 +201,13 @@ and sem_stmt env stmt =
                               (* printST env; *)
                               (* Printf.printf "%s" name; *)
                               (* if name = "writeInteger" then printST env else [()]; *)
-                              (match func with 
-                              | FunEntry (t, params) -> if custom_checklist types params then true else (*let _ = printST env in *)raise (TypeError "(stmt call)Wrong parameters were given to function when called")
+                              (match func with (* na valw ena kalytero exception message gia to type error me onoma synarthshs ktl*)
+                              | FunEntry (t, params) -> if custom_checklist types params then true else (*let _ = printST env in *)raise (TypeError "stmt Wrong parameters were given to function when called") 
                               | _                    -> raise (TypeError (name ^ " is a variable, not a function")))
   | S_colon _              -> true
   | S_assign (e1, e2)      -> let t1 = sem_expr env e1 in
                               let t2 = sem_expr env e2 in
-                              if t1 = t2 then true else raise (TypeError "Assignment with different types")
+                              if t1 = t2 then true else raise (TypeError "left and right values of assignment do not type-match")
   | S_block stmts          -> let checkList = List.map (sem_stmt env) stmts in
                               not (List.mem false checkList)
   | S_if (c, s)            -> let t = sem_cond c env in
