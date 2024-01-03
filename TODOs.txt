@@ -11,7 +11,12 @@ na petaei katallila errors analoga to lexing h to parsing (to lexing den exei er
 
 στον lexer τα common_chars μηπως πρέπει να συμπεριλαμβάνουν ολες τις τιμες? (να μην εξαιρονται τα αυτακια κτλ)
 
-- Ta types na ginoun ena type (symfwna me to implementation in ML vivlio + to types.ml tou papaspyrou)
 - na dw apo to github gia ligo kalyterh organwsh tou parser
 
 - shmasiologikh analysi leipei to check gia duplicate variable (na dw kai apo vivlio)
+
+- cleanup to semantic.ml
+
+- mporei na dhmiourgei ena neo environment (apo to mhden) gia ta local-defs kai otan teleiwsoun ta local-defs na to kanei merge (h union) me to arxiko. etsi tha mporw na tsekarw gia duplicate variable dhl an jana orizetai mia metavliti mesa sta local-defs
+
+- prepei na tsekarw ola ta erroneous gia semantic-analysis (very useful)
