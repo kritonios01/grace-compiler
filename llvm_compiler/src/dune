@@ -1,0 +1,43 @@
+(library
+	(name ast)
+	(modules ast))
+
+(library
+	(name symbol)
+	(modules symbol)
+	(libraries ast))
+
+(library
+	(name semantic)
+	(modules semantic)
+	(libraries ast symbol))
+
+
+(ocamllex lexer)
+
+(menhir
+ 	(modules parser))
+
+
+
+(executable
+	(name main)
+	(public_name compiler)
+	(libraries 
+			semantic 
+			ast 
+			symbol 
+			llvm
+			llvm.analysis
+			llvm.execution
+			llvm.all_backends
+			llvn.scalar_opts)
+	(modules main parser lexer)
+)
+
+(executable
+	(name test)
+	(public_name test)
+	(libraries llvm)
+	(modules test)
+)
