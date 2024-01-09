@@ -31,11 +31,11 @@ let lookupST k mapping =
     | Some value -> value
     | None       -> raise (SymbolExc (k, "Unknown variable/function"))
 
-    let rec list_to_string l =
-      match l with
-      | [] -> ""
-      | [a] -> a
-      | (h::t) -> h ^ ", " ^ (list_to_string t)
+let rec list_to_string l =
+  match l with
+  | [] -> ""
+  | [a] -> a
+  | (h::t) -> h ^ ", " ^ (list_to_string t)
 
 (* helper for debugging *)
 let printST mapping =

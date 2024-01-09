@@ -170,7 +170,7 @@ let rec sem_decl env decl =
   | F_def (h, locals, block) -> let env = sem_decl env h in
                                 let env = List.fold_left sem_localdef env locals in
                                 if sem_stmt env block then env else raise (TypeError "aa") (*dummy error, look into this when using this in main.ml*)
-  | F_decl head              -> (match head with (* na pianetai h periptwsh pou meta to decl den orizetai h synarthhs*)
+  | F_decl head              -> (match head with (* na pianetai h periptwsh pou meta to decl den orizetai h synarthsh. episis na pianetai h periptwsh pou orizetai jana synarthsh me idio onoma. na kanw stress test me idia onomata*)
                                 | F_head (name, params, t) -> (match params with
                                                               | Some ps  -> let types = paramsToTypes ps [] in
                                                                             insertST env name (FunEntry(t, types))

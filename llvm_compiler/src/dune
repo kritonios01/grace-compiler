@@ -22,22 +22,25 @@
 
 (executable
 	(name main)
-	(public_name compiler)
+	(public_name main)
 	(libraries 
 			semantic 
 			ast 
 			symbol 
 			llvm
 			llvm.analysis
-			llvm.execution
+			;llvm.execution
 			llvm.all_backends
-			llvn.scalar_opts)
+			llvm.scalar_opts)
 	(modules main parser lexer)
 )
 
 (executable
-	(name test)
-	(public_name test)
-	(libraries llvm)
-	(modules test)
+	(name compiler)
+	(public_name compiler)
+	(libraries 
+			llvm
+			llvm.scalar_opts
+			llvm.all_backends)
+	(modules compiler)
 )
