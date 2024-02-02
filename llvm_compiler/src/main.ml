@@ -1,5 +1,3 @@
-open Llvm
-
 let main =
   let lexbuf = Lexing.from_channel stdin in
   try

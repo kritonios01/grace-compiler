@@ -37,3 +37,5 @@ undeffunc.grc
 zeroisarrays.grc
 
 
+
+- yparxei ena sxolio sto /parser-sem/semantic.ml grammi 173 to opoio afora ton semantic analyzer genikotera kai tha prepei na metaferthei kai ston compiler otan ginei to fix

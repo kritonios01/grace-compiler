@@ -162,7 +162,7 @@ let rec sem_decl env decl =
                                 | TY_char            -> addVars env vars CharEntry
                                 | TY_array (t, dims) -> addVars env vars (ArrayEntry (t, dims))
                                 | _                  -> raise (Failure "10 Reached unreachable :("))
-  | F_head (name, params, t) -> (match params with
+  | F_head (name, params, t) -> (match params with (* check oti o typos epistrofhs den einai pinakas *)
                                 | Some ps  -> let env = List.fold_left sem_decl env ps in
                                               let types = paramsToTypes ps [] in
                                               insertST env name (FunEntry(t, types))

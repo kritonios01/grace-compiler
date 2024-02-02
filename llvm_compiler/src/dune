@@ -41,6 +41,10 @@
 	(libraries 
 			llvm
 			llvm.scalar_opts
-			llvm.all_backends)
+			llvm.all_backends
+			llvm.analysis
+			ast
+			symbol
+			semantic)
 	(modules compiler)
 )

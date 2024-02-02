@@ -66,7 +66,7 @@ let func_def       := ~ = header; ~ = local_def*; ~ = block;          < F_def > 
 
 (* functions and variables *)
 let header         := T_fun; ~ = T_id; "("; ~ = fpar_defs?; ")"; ":"; ~ = ret_type;        < F_head >   //function declaration
-let fpar_def       := ref = T_ref?; id1 = T_id; ids = more_ids*; ":"; typ = fpar_type;     { F_params (ref, id1::ids, typ)}    //function params
+let fpar_def       := ref = T_ref?; id1 = T_id; ids = more_ids*; ":"; typ = fpar_type;     { F_params (ref, id1::ids, typ) }    //function params
 let fpar_defs      := par1 = fpar_def; pars = more_fpar_defs*;                             { par1::pars }    //helper
 let more_fpar_defs := ";"; ~ = fpar_def;                                                   { fpar_def }    //helper
 
