@@ -131,7 +131,6 @@ and mcomment = parse
   | [^ '$' '$']*        { Printf.eprintf "Error on multiline comment\n"; lexer lexbuf           }
 
 
-
 {
   let string_of_token token =
     match token with

@@ -1,0 +1,8 @@
+fun hello () : int
+{
+   writeInteger(4);
+	 writeChar('\n'); $den doulevei gia special characters
+	 $ writeString("\'h\'e\"li\ta\\d\n"); $ayto gia testing purposes
+	 writeString("\x3c\n");
+	 readInteger();
+}

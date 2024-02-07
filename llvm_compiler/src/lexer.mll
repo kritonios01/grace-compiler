@@ -3,6 +3,29 @@
   open Parser
 
   let num_lines = ref 0
+  (* let char_list = ref [] *)
+
+  let fix_esqsecs str =
+    let open Str in
+    let regex = regexp "\\\\n" in
+    let str = global_replace regex "\n" str in
+    let regex = regexp "\\\\t" in
+    let str = global_replace regex "\t" str in
+    let regex = regexp "\\\\r" in
+    let str = global_replace regex "\r" str in
+    (* let regex = regexp "\\\\0" in
+    let str = global_replace regex "\0" str in *)
+    let regex = regexp "\\\\\\\\" in
+    let str = global_replace regex "\\\\" str in
+    let regex = regexp "\\\\'" in
+    let str = global_replace regex "\'" str in
+    let regex = regexp "\\\\\"" in
+    let str = global_replace regex "\"" str in
+    let regex = regexp "\(\\\\x..\)" in
+    let str = global_replace regex "\1" str in
+
+    str
+
   exception LexingError of string
 }
 
@@ -45,8 +68,14 @@ rule lexer = parse
   | digit+                                { T_consti (int_of_string (lexeme lexbuf)) }
   
   (* char and string constants *)
-  | '\'' (escseq | common_chars)  '\''    { T_constc (lexeme_char lexbuf 1) }
-  | '\"' (escseq | common_chars)* '\"'    { T_consts (lexeme lexbuf) }
+  | '\'' (escseq | common_chars)  '\''    { T_constc (lexeme_char lexbuf 1) (*let slen = String.length (lexeme lexbuf) in
+                                            T_constc (String.sub (lexeme lexbuf) 1 (slen- 2))*)}
+  | '\"' (escseq | common_chars)*  '\"'   { (*char_list := []; strings lexbuf*)
+                                            let s = (lexeme lexbuf) in
+                                            let slen = String.length (s) in
+                                            let correct_s = String.sub (s) 1 (slen - 2) in
+                                            let fixed_s = fix_esqsecs correct_s in
+                                            T_consts (fixed_s) }
 
   (* symbolic operators *)
   | '+'       { T_plus      }
@@ -93,3 +122,14 @@ and mcomment = parse
   | '\n'       { incr num_lines; mcomment lexbuf }
   | _          { mcomment lexbuf                 }
   | eof        { raise (LexingError "Reached EOF: Missing closing '$$'") }
+
+(* and strings = parse
+  | "\\x" (hex as d1) (hex as d2)   { !char_list := (Char.chr (int_of_hex) d1 d2)::char_list; 
+                                      strings lexbuf }
+  | escsec as c  {
+      let correct_c =
+        match c with
+        | "\\n" -> '\n'
+        | "\\t" -> '\t'
+        | "\\r" -> 
+    } *)

@@ -27,17 +27,13 @@
 			semantic 
 			ast 
 			symbol 
-			llvm
-			llvm.analysis
-			;llvm.execution
-			llvm.all_backends
-			llvm.scalar_opts)
+			compiler)
 	(modules main parser lexer)
 )
 
-(executable
+(library
 	(name compiler)
-	(public_name compiler)
+	(modules compiler)
 	(libraries 
 			llvm
 			llvm.scalar_opts
@@ -45,6 +41,8 @@
 			llvm.analysis
 			ast
 			symbol
-			semantic)
-	(modules compiler)
+			semantic
+			str) ;str module is here for the lexer.mll which uses it. for some reason this works....
 )
+
+; sto telos na kanw ena hide warnings

@@ -1,6 +1,6 @@
 .PHONY: default all clean FORCE
 
-LLVMCONFIG=llvm-config
+LLVMCONFIG=llvm-config-15
 LLVMLDFLAGS=-L`$(LLVMCONFIG) --libdir`
 LLVMPACKAGES=llvm,llvm.analysis,llvm.all_backends,llvm.scalar_opts
 

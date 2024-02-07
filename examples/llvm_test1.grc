@@ -1,0 +1,6 @@
+fun xxx () : int
+	fun yyy () : int
+	{
+	}
+{	
+}
