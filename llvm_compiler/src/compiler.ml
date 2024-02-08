@@ -46,8 +46,8 @@ let codegen_expr llvm env expr =
       let _ = build_store str str_array llvm.builder in
       let str_ptr = build_gep2 str_ty str_array [| llvm.c32 0; llvm.c32 0 |] "str_ptr" llvm.builder in
       
-      let cast_opaque = build_bitcast str_ptr (pointer_type2 llvm.context) "ptr" llvm.builder in
-      (* str_ptr *) cast_opaque
+      let opaque_ptr = build_bitcast str_ptr (pointer_type2 llvm.context) "ptr" llvm.builder in
+      (* str_ptr *) opaque_ptr
 
   | _ -> raise (Failure "dummy error, have to look into this")
 

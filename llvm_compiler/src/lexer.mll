@@ -3,9 +3,20 @@
   open Parser
 
   let num_lines = ref 0
-  (* let char_list = ref [] *)
 
-  let fix_esqsecs str =
+  let to_esc_seq c =
+    match c with
+    | 'n' -> '\n'
+    | 't' -> '\t'
+    | 'r' -> '\r'
+    | '0' -> Char.chr 0
+    | '\\' -> '\\'
+    | '\'' -> '\''
+    | '"' -> '"'
+    | _   -> assert false
+
+
+  (* let fix_esqsecs str =
     let open Str in
     let regex = regexp "\\\\n" in
     let str = global_replace regex "\n" str in
@@ -24,7 +35,7 @@
     let regex = regexp "\(\\\\x..\)" in
     let str = global_replace regex "\1" str in
 
-    str
+    str *)
 
   exception LexingError of string
 }
@@ -68,14 +79,22 @@ rule lexer = parse
   | digit+                                { T_consti (int_of_string (lexeme lexbuf)) }
   
   (* char and string constants *)
-  | '\'' (escseq | common_chars)  '\''    { T_constc (lexeme_char lexbuf 1) (*let slen = String.length (lexeme lexbuf) in
+  | '\'' common_chars  '\''    { T_constc (lexeme_char lexbuf 1) (*let slen = String.length (lexeme lexbuf) in
                                             T_constc (String.sub (lexeme lexbuf) 1 (slen- 2))*)}
-  | '\"' (escseq | common_chars)*  '\"'   { (*char_list := []; strings lexbuf*)
-                                            let s = (lexeme lexbuf) in
+
+  | '\'' escseq as s '\''               {
+      match (String.length s) with
+      | 2 -> T_constc (to_esc_seq s.[1])
+      | 4 -> T_constc (Char.chr (Scanf.sscanf (String.sub s 2 2) "%x" (fun x -> x)))
+      | _ -> assert false
+  }
+
+  | '\"'    { strings "" lexbuf }
+                                            (*let s = (lexeme lexbuf) in
                                             let slen = String.length (s) in
                                             let correct_s = String.sub (s) 1 (slen - 2) in
                                             let fixed_s = fix_esqsecs correct_s in
-                                            T_consts (fixed_s) }
+                                            T_consts (fixed_s) }*)
 
   (* symbolic operators *)
   | '+'       { T_plus      }
@@ -133,3 +152,19 @@ and mcomment = parse
         | "\\t" -> '\t'
         | "\\r" -> 
     } *)
+
+and strings current = parse
+  | '"'    { T_consts current }
+  | '\n'   {
+      raise (LexingError "String literals must be closed in the same line");
+      strings current lexbuf
+  }
+  | common_chars as chr { strings (current ^ (String.make 1 chr)) lexbuf }
+  | escseq as esc {
+    if (String.length esc == 2) then
+        strings (current ^ (String.make 1 (to_esc_seq esc.[1]))) lexbuf
+    else if (String.length esc == 4) then
+        strings (current ^ (String.make 1 (Char.chr (Scanf.sscanf (String.sub esc 2 2) "%x" (fun x-> x))))) lexbuf
+    else assert false
+  }
+  | _ as x { raise (LexingError ("Invalid character with ascii code" ^ (String.make 1 ( x)) ^ "inside string literal"))  }
