@@ -157,6 +157,7 @@ let llvm_compile_and_dump asts =
   Llvm.set_linkage Llvm.Linkage.Private the_vars;
   Llvm.set_initializer (Llvm.const_null vars_type) the_vars;
   Llvm.set_alignment 16 the_vars;
+
   let nl = "\n" in
   let nl_type = Llvm.array_type i8 (1 + String.length nl) in
   let the_nl = Llvm.declare_global nl_type "nl" the_module in
@@ -164,6 +165,7 @@ let llvm_compile_and_dump asts =
   Llvm.set_global_constant true the_nl;
   Llvm.set_initializer (Llvm.const_stringz context nl) the_nl;
   Llvm.set_alignment 1 the_nl;
+  
   (* Initialize library functions *)
   let writeInteger_type =
     Llvm.function_type (Llvm.void_type context) [| i64 |] in

@@ -19,9 +19,6 @@ type llvm_info = {
   c64              : int -> llvalue;
   void             : lltype;
   the_vars         : llvalue;
-  the_nl           : llvalue;
-  writeInteger     : llvalue;
-  writeString      : llvalue;
 }
 
 
@@ -36,18 +33,17 @@ let codegen_expr llvm env expr =
   match expr with
   | E_int_const i  -> llvm.c64 i
   | E_char_const c -> llvm.c8 (Char.code c)
-  | L_string_lit s -> (*const_stringz llvm.context s; build_gep2*)
+  | L_string_lit s -> 
       let str = const_stringz llvm.context s in
-      let str_ty = type_of str in (*array_type llvm.i8 (1 + String.length s) in*)
+      let str_ty = type_of str in
 
-      (* reposition kai elegxos ypoloipwn syanrthsewn*)
+      (* elegxos ypoloipwn syanrthsewn*)
 
       let str_array = build_alloca str_ty "tmp" llvm.builder in
       let _ = build_store str str_array llvm.builder in
       let str_ptr = build_gep2 str_ty str_array [| llvm.c32 0; llvm.c32 0 |] "str_ptr" llvm.builder in
-      
       let opaque_ptr = build_bitcast str_ptr (pointer_type2 llvm.context) "ptr" llvm.builder in
-      (* str_ptr *) opaque_ptr
+      opaque_ptr
 
   | _ -> raise (Failure "dummy error, have to look into this")
 
@@ -183,14 +179,6 @@ let llvm_compile_and_dump asts =
   set_initializer (const_null vars_type) the_vars;
   Llvm.set_alignment 16 the_vars;
 
-  let nl = "\n" in
-  let nl_type = array_type i8 (1 + String.length nl) in
-  let the_nl = declare_global nl_type "nl" md in
-  set_linkage Linkage.Private the_nl;
-  set_global_constant true the_nl;
-  set_initializer (const_stringz ctx nl) the_nl;
-  set_alignment 1 the_nl;
-
 
   (* Initialize library functions and add them to the Symbol Table *)
   let writeInteger_ty = function_type void [| i64 |] in
@@ -206,38 +194,20 @@ let llvm_compile_and_dump asts =
   let strcpy_ty = function_type void [| pointer_type2 ctx; pointer_type2 ctx |] in
   let strcat_ty = function_type void [| pointer_type2 ctx; pointer_type2 ctx |] in
   
-  let writeInteger =
-    declare_function "writeInteger" writeInteger_ty md in
-  let writeChar =
-    declare_function "writeChar" writeChar_ty md in
-  let writeString =
-    declare_function "writeString" writeString_ty md in
-  let readInteger =
-    declare_function "readInteger" readInteger_ty md in
-  let readChar =
-    declare_function "readChar" readChar_ty md in
-  let readString =
-    declare_function "readString" readString_ty md in
-  let ascii =
-    declare_function "ascii" ascii_ty md in
-  let chr =
-    declare_function "chr" chr_ty md in
-  let strlen =
-    declare_function "strlen" strlen_ty md in
-  let strcmp =
-    declare_function "strcmp" strcmp_ty md in
-  let strcpy =
-    declare_function "strcpy" strcpy_ty md in
-  let strcat =
-    declare_function "strcat" strcat_ty md in
+  let _ = declare_function "writeInteger" writeInteger_ty md in
+  let _ = declare_function "writeChar" writeChar_ty md in
+  let _ = declare_function "writeString" writeString_ty md in
+  let _ = declare_function "readInteger" readInteger_ty md in
+  let _ = declare_function "readChar" readChar_ty md in
+  let _ = declare_function "readString" readString_ty md in
+  let _ = declare_function "ascii" ascii_ty md in
+  let _ = declare_function "chr" chr_ty md in
+  let _ = declare_function "strlen" strlen_ty md in
+  let _ = declare_function "strcmp" strcmp_ty md in
+  let _ = declare_function "strcpy" strcpy_ty md in
+  let _ = declare_function "strcat" strcat_ty md in
 
   let predefined_env = addPredefined emptyST in
-
-  (* Define and start the main function *)
-  (* let main_ty = function_type i32 [| |] in
-  let main = declare_function "main" main_ty md in
-  let bb = append_block ctx "main_entry" main in
-  position_at_end bb builder; setinsertpoint *)
 
   (* gather all info in a record for later use *)
   let info = {
@@ -252,14 +222,11 @@ let llvm_compile_and_dump asts =
     c64              = c64;
     void             = void;
     the_vars         = the_vars;
-    the_nl           = the_nl;
-    writeInteger     = writeInteger;
-    writeString      = writeString;
   } in
 
 
   (* Emit the program code and add return value to main function *)
-  compile_decl info predefined_env asts; (*MAJOR PROBLEM: first function must be called main in llvm ir*)
+  ignore (compile_decl info predefined_env asts); (*MAJOR PROBLEM: first function must be called main in llvm ir*)
   (* ignore (build_ret (c32 0) builder); *)
 
   (* Verify the entire module*)
