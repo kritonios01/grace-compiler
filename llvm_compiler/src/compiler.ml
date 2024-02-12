@@ -1,8 +1,9 @@
 open Llvm
 open Ast
 open Symbol
-open Semantic
+open TypeKind
 
+(* edw to ST apothikevei tis thesei mnimis opou apothikevontai ta locals *)
 
 let first_function = ref true; (* first function in llvm ir must be called main, but grace syntax allows any name for a program's main function*)
 
@@ -11,9 +12,11 @@ type llvm_info = {
   context          : llcontext;
   the_module       : llmodule;
   builder          : llbuilder;
+  i1               : lltype;
   i8               : lltype;
   i32              : lltype;
   i64              : lltype;
+  c1               : int -> llvalue;
   c8               : int -> llvalue;
   c32              : int -> llvalue;
   c64              : int -> llvalue;
@@ -21,133 +24,415 @@ type llvm_info = {
   the_vars         : llvalue;
 }
 
+(* helper function to compute index of linearized multi-dim array*)
+let compute_linear_index dimensions indices =
+  let rec aux acc dims indices =
+    match dims, indices with
+    | [], [] -> acc
+    | d :: rest_dims, i :: rest_indices ->
+      let acc' = acc * d + i in
+      aux acc' rest_dims rest_indices
+    | _ -> failwith "Mismatched dimensions and indices"
+  in
+  aux 0 dimensions indices
 
-let type_to_lltype llvm ty =
+
+
+let rec type_to_lltype llvm ty =
   match ty with
-  | TY_int  -> llvm.i32
-  | TY_char -> llvm.i8
-  | TY_none -> llvm.void
-  | _       -> llvm.i32 (*to be implemented*)
+  | TY_int          -> (llvm.i64, None)
+  | TY_char         -> (llvm.i8, None)
+  | TY_none         -> (llvm.void, None)
+  | TY_array (t, l) -> 
+      let (ty, _) = type_to_lltype llvm t in
+      let dims_sum = List.fold_left ( * ) 1 l in
+      (Llvm.array_type ty dims_sum, Some l)
 
-let codegen_expr llvm env expr =
-  match expr with
-  | E_int_const i  -> llvm.c64 i
-  | E_char_const c -> llvm.c8 (Char.code c)
-  | L_string_lit s -> 
-      let str = const_stringz llvm.context s in
-      let str_ty = type_of str in
+(* this for matrix indexes (l-values) so that we don't have to codegen anything*)
+let retrieve_index e =
+  match e with
+  | E_int_const i -> i
+  | _             -> assert false
 
-      (* elegxos ypoloipwn syanrthsewn*)
 
-      let str_array = build_alloca str_ty "tmp" llvm.builder in
-      let _ = build_store str str_array llvm.builder in
-      let str_ptr = build_gep2 str_ty str_array [| llvm.c32 0; llvm.c32 0 |] "str_ptr" llvm.builder in
-      let opaque_ptr = build_bitcast str_ptr (pointer_type2 llvm.context) "ptr" llvm.builder in
-      opaque_ptr
-
-  | _ -> raise (Failure "dummy error, have to look into this")
-
-let codegen_stmt llvm env stmt = (* isos den xreiazetai to env *)
+let rec create_fcall llvm env stmt =
   match stmt with
-  | S_fcall (name, exprs) ->     
+  | S_fcall (name, exprs) -> (* otan kaleitai mia synarthsh prepei na kanei alloca ta vars ths?? *)
       let f = 
         match lookup_function name llvm.the_module with
         | Some f -> f
         | None -> raise (Failure "unknown function referenced") in
-      let frt =  return_type (type_of f) in
+      let frt = (return_type (type_of f)) in (*regarding these: for writeInt (f is void (i64)* ), (type_of f is void (i64)), (element_type type_of f is void)*)
+      let actual_frt = element_type frt in
       let params = params f in
       let ll_args =
         match exprs with
         | Some es -> 
             if Array.length params = List.length es then () else
               raise (Failure "incorrect # arguments passed");
-            Array.of_list (List.map (codegen_expr llvm env) es)
+            let params, _ = List.split (List.map (codegen_expr llvm env) es) in
+            params
         | None ->
             if Array.length params = 0 then () else
               raise (Failure "incorrect # arguments passed");
-            [| |] 
+            []
       in
-      let name = (*if return_type frt == void then "" else name^"_call" in*)
-        match frt with
-        | void -> ""
-        | _ -> name^"call" in
-      ignore (build_call2 frt f ll_args name llvm.builder)
 
-  | _ -> raise (Failure "dummy failure")
+      (* print_string (string_of_lltype (type_of f)); *)
 
-let codegen_block llvm env block =
-  match block with
-  | S_block stmts -> List.map (codegen_stmt llvm env) stmts
-  | _ -> raise (Failure "dummy")
 
-let compile_fparam llvm params = 
+      let fix_arg arg = 
+        let ty = type_of arg in
+        let element_ty = element_type (type_of arg) in
+        (* print_string ((string_of_lltype (type_of arg)) ^ " ");
+        print_string ((string_of_lltype (element_type (type_of arg))) ^ " "); *)
+        match classify_type ty with (* ola ayta ejartwntai apo to an einai ref!*)
+        | Pointer -> 
+            begin
+              match classify_type element_ty with
+              | Array -> 
+                  let str_ptr = build_gep2 element_ty arg [| llvm.c32 0; llvm.c32 0 |] "arrptr" llvm.builder in (* ??? build_gep and opaque_ptr should be handled on the receiver (so a build_load is needed????) *)
+                  let opaque_ptr = build_bitcast str_ptr (pointer_type2 llvm.context) "ptr" llvm.builder in
+                  opaque_ptr
+              | _ -> build_load2 element_ty arg "farg" llvm.builder (* pointer is a variable or an array element*)
+            end
+        | Integer -> arg
+        | _ -> raise (Failure "aa")
+          
+          (* let var_ptr = build_gep2 ty arg [| llvm.c32 0; llvm.c32 0 |] ("farg"^"ptr") llvm.builder in
+          let opaque_ptr = build_bitcast var_ptr (pointer_type2 llvm.context) "ptr" llvm.builder in
+          opaque_ptr *)
+      in
+      let ll_args = Array.of_list (List.map fix_arg ll_args) in
+
+
+      begin
+        match classify_type actual_frt with
+        | Void -> build_call2 frt f ll_args "" llvm.builder
+        | Integer ->
+            if integer_bitwidth actual_frt == 32 then
+              let ret = build_call2 frt f ll_args (name^"call") llvm.builder in
+              build_sext ret llvm.i64 (name^"ret") llvm.builder
+            else
+              build_call2 frt f ll_args (name^"ret") llvm.builder
+        | _ -> assert false
+      end
+  | _ -> assert false
+
+and handle_matrix llvm env lvalue acc =
+  match lvalue with
+  | L_id var          -> (codegen_expr llvm env (L_id var))::acc
+  | L_string_lit s    -> (codegen_expr llvm env (L_string_lit s))::acc
+  | L_matrix (e1, e2) ->
+      let x = codegen_expr llvm env e2 in
+      handle_matrix llvm env e1 (x::acc)
+  | _ -> assert false
+
+and codegen_expr llvm env expr =
+  match expr with
+  | E_int_const i  -> llvm.c64 i, None
+  | E_char_const c -> llvm.c8 (Char.code c), None
+  | L_string_lit s -> 
+      let str = const_stringz llvm.context s in
+      let str_ty = type_of str in
+      (* elegxos ypoloipwn syanrthsewn*)
+
+      let str_ptr = build_alloca str_ty "strtmp" llvm.builder in
+      let _ = build_store str str_ptr llvm.builder in
+      (* let str_ptr = build_gep2 str_ty str_array [| llvm.c32 0; llvm.c32 0 |] "str_ptr" llvm.builder in (* ??? build_gep and opaque_ptr should be handled on the receiver (so a build_load is needed????) *)
+      let opaque_ptr = build_bitcast str_ptr (pointer_type2 llvm.context) "ptr" llvm.builder in *)
+      str_ptr, Some [1 + String.length s]
+  | L_id var ->
+      let var_ptr, dims = lookupST var env in
+      var_ptr, dims
+      (* begin
+        match var_ty with
+        | i32 when i32 == llvm.i32 -> var_addr, None  (* ean einai function param BY REFERENCE ayto prepei na allajei*)
+        | i8 when i8 == llvm.i8    -> var_addr, None 
+        | _ ->
+          let var_ptr = build_gep2 var_ty var_addr [| llvm.c32 0; llvm.c32 0 |] (var^"ptr") llvm.builder in
+          let opaque_ptr = build_bitcast var_ptr (pointer_type2 llvm.context) "ptr" llvm.builder in
+          opaque_ptr, dims
+      end *)
+  | L_matrix (e1, e2) as e ->
+      let array_types, dims = List.split (handle_matrix llvm env e []) in
+      let dims = Option.get (List.hd dims) in
+      begin
+        match array_types with
+        | array_ptr::indexes ->
+            let array_ty = element_type (type_of array_ptr) in (*type_of array_ptr is pointer to the type of array eg [50xi64]*, so element_type is the array type [50xi64] (not pointer)*)
+            let int_indexes = List.map (fun x -> Int64.to_int (Option.get (int64_of_const x))) indexes in
+            let linear_index = compute_linear_index dims int_indexes in
+          
+            (* element_ptr points to the index of the matrix we want *)
+            let element_ptr = build_gep2 array_ty array_ptr [| llvm.c32 0; llvm.c32 linear_index |] "matrixptr" llvm.builder in
+            (* element_type of array_ty is the type of an array. if [50xi64] then i64 *)
+            element_ptr, None
+        | [] -> assert false
+      end
+  | E_fcall stmt -> 
+      (match stmt with
+      | S_fcall (name, ps) -> 
+          let retv = create_fcall llvm env (S_fcall (name, ps)) in
+          retv, None
+      | _ -> assert false)
+  | E_op1 (op, e) -> 
+      let rhs, _ = codegen_expr llvm env e in
+
+      let get_values llv = 
+        let ty = type_of llv in
+        let element_ty = element_type (type_of llv) in
+        match classify_type ty with
+        | Pointer -> build_load2 element_ty llv "condtmp" llvm.builder (* pointer is a variable or an array element*)
+        | Integer -> llv
+        | _ -> raise (Failure "aa")
+      in
+      let rhs = get_values rhs in
+
+      begin
+        match op with
+        | Op_plus  -> rhs, None
+        | Op_minus -> build_neg rhs "negtmp" llvm.builder, None
+        | _        -> assert false
+      end
+  | E_op2 (e1, op, e2) ->
+      let lhs, _ = codegen_expr llvm env e1 in
+      let rhs, _ = codegen_expr llvm env e2 in
+
+      let get_values llv = 
+        let ty = type_of llv in
+        let element_ty = element_type (type_of llv) in
+        match classify_type ty with
+        | Pointer -> build_load2 element_ty llv "condtmp" llvm.builder (* pointer is a variable or an array element*)
+        | Integer -> llv
+        | _ -> raise (Failure "aa")
+      in
+      let lhs = get_values lhs in
+      let rhs = get_values rhs in
+
+      match op with
+      | Op_plus  -> build_add lhs rhs "addtmp" llvm.builder, None
+      | Op_minus -> build_sub lhs rhs "subtmp" llvm.builder, None
+      | Op_times -> build_mul lhs rhs "multmp" llvm.builder, None
+      | Op_div   -> build_sdiv lhs rhs "divtmp" llvm.builder, None
+      | Op_mod   -> build_srem lhs rhs "modtmp" llvm.builder, None
+      | _        -> assert false
+
+and codegen_cond llvm env cond =
+  match cond with
+  | C_bool1 (op, c) ->
+    (* body *)
+      let rhs = codegen_cond llvm env c in
+      begin
+        match op with
+        | Op_not -> build_xor rhs (llvm.c1 1) "negtmp" llvm.builder
+        | _      -> assert false
+      end
+  | C_bool2 (c1, op, c2) ->
+      let lhs = codegen_cond llvm env c1 in
+      let rhs = codegen_cond llvm env c2 in
+      begin
+        match op with
+        | Op_and -> build_and lhs rhs "andtmp" llvm.builder
+        | Op_or  -> build_or lhs rhs "ortmp" llvm.builder
+        | _      -> assert false
+      end
+  | C_expr (e1, op, e2) -> 
+      let lhs, _ = codegen_expr llvm env e1 in
+      let rhs, _ = codegen_expr llvm env e2 in
+      
+      let get_values llv = 
+        let ty = type_of llv in
+        let element_ty = element_type (type_of llv) in
+        match classify_type ty with
+        | Pointer -> build_load2 element_ty llv "condtmp" llvm.builder (* pointer is a variable or an array element*)
+        | Integer -> llv
+        | _ -> raise (Failure "aa")
+      in
+      let lhs = get_values lhs in
+      let rhs = get_values rhs in
+      
+      match op with
+      | Op_eq          -> build_icmp Icmp.Eq lhs rhs "eqtmp" llvm.builder
+      | Op_hash        -> build_icmp Icmp.Ne lhs rhs "netmp" llvm.builder
+      | Op_less        -> build_icmp Icmp.Slt lhs rhs "sltmp" llvm.builder
+      | Op_lesseq      -> build_icmp Icmp.Sle lhs rhs "slemp" llvm.builder
+      | Op_greater     -> build_icmp Icmp.Sgt lhs rhs "sgtmp" llvm.builder
+      | Op_greatereq   -> build_icmp Icmp.Sge lhs rhs "sgemp" llvm.builder
+      | _              -> assert false
+
+
+and codegen_stmt llvm env stmt = (* isos den xreiazetai to env *)
+  match stmt with
+  | S_fcall (name, exprs) as fcall -> let _ = create_fcall llvm env fcall in ()
+  | S_colon _ -> ()
+  | S_assign (e1, e2) ->
+      let l, _ = codegen_expr llvm env e1 in
+      let r, _ = codegen_expr llvm env e2 in
+      let _ =
+        match classify_type (type_of r) with
+        | Pointer -> 
+            let v = build_load2 (element_type (type_of r)) r "rvload" llvm.builder in
+            build_store v l llvm.builder
+        | _ -> build_store r l llvm.builder
+      in ()
+  | S_block stmts -> List.iter (codegen_stmt llvm env) stmts
+  | S_if (c, s) ->
+      let cond = codegen_cond llvm env c in
+      let start_bb = insertion_block llvm.builder in
+      let cur_function = block_parent start_bb in
+
+      let then_bb = append_block llvm.context "then" cur_function in
+      let after_bb = append_block llvm.context "after" cur_function in
+      let _ = build_cond_br cond then_bb after_bb llvm.builder in
+
+      position_at_end then_bb llvm.builder;
+      codegen_stmt llvm env s;
+      let _ = build_br after_bb llvm.builder in
+
+      position_at_end after_bb llvm.builder
+  | S_ifelse (c, s1, s2) ->
+      let cond = codegen_cond llvm env c in
+      let start_bb = insertion_block llvm.builder in
+      let cur_function = block_parent start_bb in
+
+      let then_bb = append_block llvm.context "then" cur_function in
+      let else_bb = append_block llvm.context "else" cur_function in
+      let merge_bb = append_block llvm.context "ifafter" cur_function in
+      let _ = build_cond_br cond then_bb else_bb llvm.builder in
+
+      position_at_end then_bb llvm.builder;
+      codegen_stmt llvm env s1;
+      let _ = build_br merge_bb llvm.builder in 
+      
+      position_at_end else_bb llvm.builder;
+      codegen_stmt llvm env s2;
+      let _ = build_br merge_bb llvm.builder in
+
+      position_at_end merge_bb llvm.builder;
+  | S_while (c, s) ->
+      let start_bb = insertion_block llvm.builder in
+      let cur_function = block_parent start_bb in
+    
+      let cond_bb = append_block llvm.context "cond" cur_function in
+      let loop_bb = append_block llvm.context "loop" cur_function in
+      let after_bb = append_block llvm.context "afterloop" cur_function in
+      let _ = build_br cond_bb llvm.builder in
+
+      position_at_end cond_bb llvm.builder;
+      let cond = codegen_cond llvm env c in
+      let _ = build_cond_br cond loop_bb after_bb llvm.builder in
+
+      position_at_end loop_bb llvm.builder;
+      codegen_stmt llvm env s;
+      let _ = build_br cond_bb llvm.builder in
+
+      position_at_end after_bb llvm.builder;
+
+  | S_return e ->
+      match e with
+      | Some expr ->
+          let n, _ = codegen_expr llvm env expr in
+          ignore (build_ret n llvm.builder)
+      | None -> ignore (build_ret_void llvm.builder)
+
+let codegen_fparam llvm params = 
   match params with
-  | F_params (r, vars, t)  -> (match r with
-                              | Some _   -> List.map (fun _ -> pointer_type2 llvm.context) vars
-                              | None     -> let ty = type_to_lltype llvm t in 
-                                            List.map (fun _ -> ty) vars)
-  | _                      -> raise (Failure "Compile params: Reached unreachable >:(")
+  | F_params (r, vars, t) -> 
+      begin
+        match r with
+        | Some _  -> List.map (fun _ -> pointer_type2 llvm.context) vars
+        | None -> 
+            let ty, _ = type_to_lltype llvm t in 
+            List.map (fun _ -> ty) vars
+      end
+  | _ -> assert false
 
 let rec fparams_to_llarray llvm fparams acc =
   match fparams with
-  | hd::tl -> fparams_to_llarray llvm tl (acc @ (compile_fparam llvm hd))
+  | hd::tl -> fparams_to_llarray llvm tl (acc @ (codegen_fparam llvm hd))
   | []     -> acc
 
-let compile_fhead llvm head =
+let codegen_fhead llvm head = (* ayto kalo einai na ginei merge me to codegen_decl *)
   match head with
-  | F_head (name, params, t) -> let ftype = type_to_lltype llvm t in
-                                (match params with
-                                | Some ps  -> let params = Array.of_list (fparams_to_llarray llvm ps []) in
-                                              (name, function_type ftype params)
-                                | None     -> (name, function_type ftype [| |]))
-  | _                        -> raise (Failure "Compile function header: Reached unreachable >:(")
+  | F_head (name, params, t) ->
+      let ftype, _ = type_to_lltype llvm t in
+      begin
+        match params with
+        | Some ps  -> let params = Array.of_list (fparams_to_llarray llvm ps []) in
+                      (name, function_type ftype params)
+        | None     -> (name, function_type ftype [| |])
+      end
+  | _ -> assert false
 
-let rec compile_decl llvm env decl =
+let rec addVars llvm env vars (t, dims) = (* edw prepei na ginei handle to duplicate vars h isws sto semantic*)
+  match vars with
+  | hd::tl -> 
+      let alloca_addr = build_alloca t hd llvm.builder in (* edw o builder kanonika prepei na phgainei sthn arxh ths synarthshs gia na paijei to mem2reg *)
+      let newST = insertST env hd (alloca_addr, dims) in
+      addVars llvm newST tl (t, dims)
+  | [] -> env
+
+let rec codegen_decl llvm env decl =
   match decl with
-  | F_def (h, locals, block) -> let env = sem_decl env (F_def (h, locals, block)) in
-                                let (name, ft) = 
-                                  if !first_function = true then (
-                                    first_function := false;
-                                    let (_, ft) = compile_fhead llvm h in
-                                    let name = "main" in
-                                    (name, ft))
-                                  else
-                                     compile_fhead llvm h
-                                in
-                                
-                                
-                                let f = 
-                                  match lookup_function name llvm.the_module with (* search for function "name" in the context *)
-                                  | None -> declare_function name ft llvm.the_module (*here what happens when a function is redefined locally?*)
-                                  | Some f ->
-                                      if Array.length (basic_blocks f) = 0 then () else
-                                        raise (Failure "redefinition of function");
-                                      if Array.length (params f) = Array.length (param_types ft) then () else
-                                        raise (Failure "redefinition of function with different # args");
-                                      f in
-                                (* set names for arguments *)
-                                let bb = append_block llvm.context (name ^ "_entry") f in
-                                position_at_end bb llvm.builder;
-                                (*handle locals and block*)
-                                (* let _ = List.fold_left (compile_decl llvm) env locals in *)
-                                (* let _ = List.map (compile_decl llvm env) locals in *)
-                                (* body *)
-                                let _ = codegen_block llvm env block in
-                                let _ = build_ret (llvm.c32 42) llvm.builder in
-                                Llvm_analysis.assert_valid_function f;
-                                env
-  | F_decl head              -> (match head with
+  | F_def (h, locals, block) -> 
+      (*let env = sem_decl env (F_def (h, locals, block)) in*) (* ayto prepei na fygei kai h shmasiologikh na ginetai anejarthta*)
+      let (name, ft) = 
+        if !first_function = true then (
+          first_function := false;
+          let (_, ft) = codegen_fhead llvm h in
+          let name = "main" in
+          (name, ft))
+        else
+          codegen_fhead llvm h
+      in
+      
+      let f = 
+        match lookup_function name llvm.the_module with (* search for function "name" in the context *)
+        | None -> declare_function name ft llvm.the_module (*here what happens when a function is redefined locally?*)
+        | Some f ->
+            if Array.length (basic_blocks f) = 0 then () else
+              raise (Failure "redefinition of function");
+            if Array.length (params f) = Array.length (param_types ft) then () else
+              raise (Failure "redefinition of function with different # args");
+            f in
+      (* set names for arguments *)
+      let bb = append_block llvm.context (name ^ "_entry") f in
+      position_at_end bb llvm.builder;
+      (*handle locals and block*)
+      let env = List.fold_left (codegen_decl llvm) env locals in
+      (* edw thelei skepsi gia to pws tha mpoun oi times twn local-defs: den thelw tis times pou eisagei to definition mias fucntion*)
+      
+      (* body *)
+      codegen_stmt llvm env block;
+      
+      (* ayto einai ligo bakalistiko, prepei na to stressarw na dw oti panta doulevei,
+         o skopos einai na vazei ret void stis void synarthseis pou den exoun to 
+         statement return sto telos*)
+      let _ = 
+        match block with
+        | S_block (stmts) ->
+            let x = List.hd (List.rev stmts) in
+            (match x with
+            | S_return _ -> ()
+            | _ -> ignore (build_ret_void llvm.builder);)
+        | _ -> assert false
+        in
+      Llvm_analysis.assert_valid_function f;
+      env
+
+
+  (* | F_decl head              -> (match head with
                                 | F_head (name, params, t) -> (match params with
                                                               | Some ps  -> let types = paramsToTypes ps [] in
                                                                             insertST env name (FunEntry(t, types))
                                                               | None     -> insertST env name (FunEntry(t, [])))
-                                | _                        -> raise (Failure "11 Reached unreachable :("))
-  | V_def (vars, t)          -> (match t with  (* prepei na kanw check gia duplicate variable! dyskolo...*)
-                                | TY_int             -> addVars env vars IntEntry
-                                | TY_char            -> addVars env vars CharEntry
-                                | TY_array (t, dims) -> addVars env vars (ArrayEntry (t, dims))
-                                | _                  -> raise (Failure "12 Reached unreachable :("))
-  | _         -> raise (Failure "Reached unreachable")
+                                | _                        -> raise (Failure "11 Reached unreachable :(")) *)
+  | V_def (vars, t) -> 
+      let llty, dims = type_to_lltype llvm t in
+      (* let dims = Option.get dims in *)
+      addVars llvm env vars (llty, dims)
+  | _         -> assert false
 
 let llvm_compile_and_dump asts =
   (* Initialize LLVM: context, module, builder and FPM*)
@@ -163,12 +448,14 @@ let llvm_compile_and_dump asts =
     Llvm_scalar_opts.add_gvn;
     Llvm_scalar_opts.add_cfg_simplification;
   ]; (*maybe add some more??? *)
-  (* Initialize types aliases *) (*remove unused *)
+  (* Initialize types aliases *)
+  let i1 = i1_type ctx in
   let i8 = i8_type ctx in
   let i32 = i32_type ctx in
   let i64 = i64_type ctx in
   let void = void_type ctx in
-  (* Initialize constant functions *) (* ayta prepei na ta dw ligo*)
+  (* Initialize constant functions *)
+  let c1 = const_int i1 in
   let c8 = const_int i8 in
   let c32 = const_int i32 in
   let c64 = const_int i64 in
@@ -207,16 +494,18 @@ let llvm_compile_and_dump asts =
   let _ = declare_function "strcpy" strcpy_ty md in
   let _ = declare_function "strcat" strcat_ty md in
 
-  let predefined_env = addPredefined emptyST in
+  (* let predefined_env = addPredefined emptyST in *)
 
   (* gather all info in a record for later use *)
   let info = {
     context          = ctx;
     the_module       = md;
     builder          = builder;
+    i1               = i1;
     i8               = i8;
     i32              = i32;
     i64              = i64;
+    c1               = c1;
     c8               = c8;
     c32              = c32;
     c64              = c64;
@@ -226,7 +515,7 @@ let llvm_compile_and_dump asts =
 
 
   (* Emit the program code and add return value to main function *)
-  ignore (compile_decl info predefined_env asts); (*MAJOR PROBLEM: first function must be called main in llvm ir*)
+  ignore (codegen_decl info emptyST asts);
   (* ignore (build_ret (c32 0) builder); *)
 
   (* Verify the entire module*)

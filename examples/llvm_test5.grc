@@ -1,0 +1,22 @@
+fun heliad () : nothing
+	var a : int;
+	var b : int;
+{
+	a <- 0;
+	b <- 2;
+	if b > 2 then {
+		a <- 4;
+		b <- 10;
+	} else if a = 0 then {
+			a <- 20;
+			b <- 21;
+		} else {
+			a <- 30;
+			b <- 31;
+	}
+	;;
+	writeInteger(a);
+	writeInteger(b);
+	writeChar('\n');
+	
+}

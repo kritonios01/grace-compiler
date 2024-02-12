@@ -1,0 +1,29 @@
+fun main() : nothing
+  $var foo : int[11];
+  $var bar : char[2][4][17];
+  var zen : int[5][10];
+	
+	var ss : char[4];
+	var a : int;
+	var c : char;
+{
+	ss[0] <- 'a';
+	ss[1] <- 'b';
+	c <- 't';
+	ss[2] <- c;
+	ss[3] <- '\0';
+	writeChar(c);
+	a <- 5;
+	zen[2][5] <- -2;
+	writeInteger(a);
+	writeInteger(zen[2][5]);
+	writeString(ss);
+	
+	writeChar('\n');
+	$writeChar('a');
+	$writeString("Hello\n");
+	$writeInteger(5 div 2);
+	$writeInteger(5*2);
+	$writeInteger(5*6 mod 7);
+	$writeInteger(4*5+3+9);
+}

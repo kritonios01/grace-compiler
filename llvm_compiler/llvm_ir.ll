@@ -27,24 +27,17 @@ declare void @strcpy(ptr, ptr)
 
 declare void @strcat(ptr, ptr)
 
-define i32 @main() {
+define void @main() {
 main_entry:
-  call void @writeInteger(i64 4)
-  call void @writeChar(i8 -18)
-  %tmp = alloca [13 x i8], align 1
-  store [13 x i8] c"'h'e\22li\09a\\d\0A\00", [13 x i8]* %tmp, align 1
-  %str_ptr = getelementptr [13 x i8], [13 x i8]* %tmp, i32 0, i32 0
-  %ptr = bitcast i8* %str_ptr to ptr
+  %strtmp = alloca [14 x i8], align 1
+  store [14 x i8] c"Hello world!\0A\00", [14 x i8]* %strtmp, align 1
+  %arrptr = getelementptr [14 x i8], [14 x i8]* %strtmp, i32 0, i32 0
+  %ptr = bitcast i8* %arrptr to ptr
   call void @writeString(ptr %ptr)
-  %tmp1 = alloca [14 x i8], align 1
-  store [14 x i8] c"fsdfdsfssdfds\00", [14 x i8]* %tmp1, align 1
-  %str_ptr2 = getelementptr [14 x i8], [14 x i8]* %tmp1, i32 0, i32 0
-  %ptr3 = bitcast i8* %str_ptr2 to ptr
+  %strtmp1 = alloca [32 x i8], align 1
+  store [32 x i8] c"Name:\09\22DouglasAdams\22\0AValue:\0942\0A\00", [32 x i8]* %strtmp1, align 1
+  %arrptr2 = getelementptr [32 x i8], [32 x i8]* %strtmp1, i32 0, i32 0
+  %ptr3 = bitcast i8* %arrptr2 to ptr
   call void @writeString(ptr %ptr3)
-  %tmp4 = alloca [3 x i8], align 1
-  store [3 x i8] c"<\0A\00", [3 x i8]* %tmp4, align 1
-  %str_ptr5 = getelementptr [3 x i8], [3 x i8]* %tmp4, i32 0, i32 0
-  %ptr6 = bitcast i8* %str_ptr5 to ptr
-  call void @writeString(ptr %ptr6)
-  ret i32 42
+  ret void
 }

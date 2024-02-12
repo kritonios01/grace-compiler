@@ -40,9 +40,7 @@
 			llvm.all_backends
 			llvm.analysis
 			ast
-			symbol
-			semantic
-			str) ;str module is here for the lexer.mll which uses it. for some reason this works....
+			symbol)
 )
 
 ; sto telos na kanw ena hide warnings

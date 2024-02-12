@@ -6,30 +6,25 @@
 main:                                   # @main
 	.cfi_startproc
 # %bb.0:                                # %main_entry
-	subq	$40, %rsp
-	.cfi_def_cfa_offset 48
-	movl	$4, %edi
-	callq	writeInteger@PLT
-	movl	$238, %edi
-	callq	writeChar@PLT
-	movabsq	$678192113877739559, %rax       # imm = 0x9696C2265276827
-	movq	%rax, 13(%rsp)
-	movb	$0, 25(%rsp)
-	movl	$174349409, 21(%rsp)            # imm = 0xA645C61
-	leaq	13(%rsp), %rdi
-	callq	writeString@PLT
-	movabsq	$8315460637037982566, %rax      # imm = 0x7366736466647366
-	movq	%rax, 26(%rsp)
-	movw	$115, 38(%rsp)
-	movl	$1684431987, 34(%rsp)           # imm = 0x64666473
-	leaq	26(%rsp), %rdi
-	callq	writeString@PLT
-	movb	$0, 12(%rsp)
-	movw	$2620, 10(%rsp)                 # imm = 0xA3C
+	subq	$56, %rsp
+	.cfi_def_cfa_offset 64
+	movabsq	$8031924123371070792, %rax      # imm = 0x6F77206F6C6C6548
+	movq	%rax, 10(%rsp)
+	movw	$10, 22(%rsp)
+	movl	$560229490, 18(%rsp)            # imm = 0x21646C72
 	leaq	10(%rsp), %rdi
 	callq	writeString@PLT
-	movl	$42, %eax
-	addq	$40, %rsp
+	movabsq	$2869948841616757, %rax         # imm = 0xA3234093A6575
+	movq	%rax, 48(%rsp)
+	movabsq	$7809617830364802401, %rax      # imm = 0x6C61560A22736D61
+	movq	%rax, 40(%rsp)
+	movabsq	$7224182139546727791, %rax      # imm = 0x644173616C67756F
+	movq	%rax, 32(%rsp)
+	movabsq	$4909496690201682254, %rax      # imm = 0x4422093A656D614E
+	movq	%rax, 24(%rsp)
+	leaq	24(%rsp), %rdi
+	callq	writeString@PLT
+	addq	$56, %rsp
 	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end0:

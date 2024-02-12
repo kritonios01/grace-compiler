@@ -6,9 +6,9 @@ exception SymbolExc of symbol * string
 
 
 type env_entry =
-  | IntEntry
-  | CharEntry
-  | ArrayEntry of Ast.typ * int list (* * int list*) (* list1 is dimensions, list2 is values *)
+  | IntEntry of int option
+  | CharEntry of char option
+  | ArrayEntry of Ast.typ * int list * string option(* * int list*) (* list1 is dimensions, list2 is values *)
   | FunEntry of Ast.typ * Ast.typ list (* string -> ref or noref *)
   (* | FunEntry of  *)
 
@@ -24,6 +24,14 @@ let emptyST = SymbolTable.empty
 
 let insertST mapping k v = 
   SymbolTable.add k v mapping
+
+let duplicateST key mapping = 
+  SymbolTable.find key mapping
+(* epeidh otan vazoume metavlites den jeroume poies einai duplicate
+   (otan yparxoun apo prin kanoume overwrite kai otan orizontai 
+   sto idio block einai duplicate) mporoume na ftiaxnoume ena 
+   neo symboltable kathe fora kai me merge h union sto telos na 
+   krataw ayta poy prepei *)
 
 let lookupST k mapping = 
   let entry = SymbolTable.find_opt k mapping in
@@ -47,9 +55,9 @@ let printST mapping =
       | Ast.TY_none  -> s ^ "none "
       | Ast.TY_array (ty,l) -> s ^ "TY_array(t:" ^ string_of_typ "" ty ^ ", dims:" ^ list_to_string (List.map string_of_int l) ^ ") " in
     match v with
-    | IntEntry -> "IntEntry"
-    | CharEntry -> "CharEntry"
-    | ArrayEntry (t, l) -> "ArrayEntry(type:" ^ string_of_typ "" t ^ ", dims:" ^ list_to_string (List.map string_of_int l) ^ ")"
+    | IntEntry _ -> "IntEntry"
+    | CharEntry _ -> "CharEntry"
+    | ArrayEntry (t, l1, l2) -> "ArrayEntry(type:" ^ string_of_typ "" t ^ ", dims:" ^ list_to_string (List.map string_of_int l1) ^ ")"
     | FunEntry (t, l)   -> "FunEntry(type:" ^ string_of_typ "" t ^ ", params:" ^ (List.fold_left string_of_typ "" l) ^ ")" in
   let helper (k, v) = 
     Printf.printf "%s -> %s\n" k (string_of_value v) in

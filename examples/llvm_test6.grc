@@ -1,0 +1,11 @@
+fun heliad () : nothing
+	var i : int;
+{
+	i <- 0;
+	while i < 10 do {
+		writeInteger(i);
+		writeChar('\n');
+		i <- i + 2;
+	}
+	return ;
+}

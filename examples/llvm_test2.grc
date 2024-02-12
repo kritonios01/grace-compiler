@@ -1,7 +1,7 @@
-fun hello () : int
+fun hello () : nothing
 {
    writeInteger(4);
-	 writeChar('\xee');
+	 writeChar('\x7e');
 	 writeString("\'h\'e\"li\ta\\d\n"); $ayto gia testing purposes
 	 writeString("fsdfdsfssdfds");
 	 writeString("\x3c\n");

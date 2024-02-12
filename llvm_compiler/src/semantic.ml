@@ -40,9 +40,9 @@ let rec sem_expr env expr =
   | E_char_const c       -> TY_char
   | L_string_lit s       -> TY_array (TY_char, [String.length s + 1])
   | L_id var             -> (match (lookupST var env) with
-                            | IntEntry                -> TY_int
-                            | CharEntry               -> TY_char
-                            | ArrayEntry (t, dims)    -> TY_array (t, dims) 
+                            | IntEntry _               -> TY_int
+                            | CharEntry _              -> TY_char
+                            | ArrayEntry (t, dims, _)    -> TY_array (t, dims) 
                             | _                       -> raise (TypeError "Expected var name but found function name as l-value"))
   | L_matrix (e1, e2)    -> let t1 = sem_expr env e1 in
                             let t2 = sem_expr env e2 in
@@ -52,7 +52,7 @@ let rec sem_expr env expr =
                                         (match t1 with
                                         | TY_array (t, dims) -> t
                                         | TY_int
-                                        | TY_char            -> raise (TypeError "Using a variable of type int or char as an array")
+                                        | TY_char            -> t1(*raise (TypeError "Using a variable of type int or char as an array")*)
                                         | _                  -> t1)
                             | _      -> raise (TypeError "index of array/matrix is not an int"))
   | E_fcall stmt   -> (match stmt with
@@ -110,13 +110,13 @@ let rec sem_cond cond env = (* this entire fucntion could well be useless... On 
                             | _              -> raise (Failure "6 Reached unreachable :(")
       
 (* helpers. check what is needed and move to top *)
-let paramsToEnventry params =
+(* let paramsToEnventry params =            THIS MAY BE NEEDED for fparams that are passed by reference, but currently not used
   match params with
   | F_params (ref, vars, t)  
   -> (match t with
       | TY_int             -> (match ref with
-                              | Some _ -> ("ref", List.map (function _ -> IntEntry) vars)
-                              | None   -> ("noref", List.map (function _ -> IntEntry) vars))
+                              | Some _ -> ("ref", List.map (function _ -> IntEntry 0) vars)
+                              | None   -> ("noref", List.map (function _ -> IntEntry 0) vars))
       | TY_char            -> (match ref with
                               | Some _ -> ("ref", List.map (function _ -> CharEntry) vars)
                               | None   -> ("noref", List.map (function _ -> CharEntry) vars))
@@ -124,7 +124,7 @@ let paramsToEnventry params =
                               | Some _ -> ("ref", List.map (function _ -> ArrayEntry(t, dims)) vars)
                               | None   -> ("noref", List.map (function _ -> ArrayEntry(t, dims)) vars))
       | _                  -> raise (Failure "7 Reached unreachable :("))
-  | _ -> raise (Failure "8 Reached unreachable :(")
+  | _ -> raise (Failure "8 Reached unreachable :(") *)
 
 let rec addVars env vars t =
   match vars with
@@ -158,9 +158,9 @@ let rec printer e =
 let rec sem_decl env decl =
   match decl with
   | F_params (_, vars, t)    -> (match t with  (* prepei na kanw check gia duplicate variable!!!!*)
-                                | TY_int             -> addVars env vars IntEntry
-                                | TY_char            -> addVars env vars CharEntry
-                                | TY_array (t, dims) -> addVars env vars (ArrayEntry (t, dims))
+                                | TY_int             -> addVars env vars (IntEntry None)
+                                | TY_char            -> addVars env vars (CharEntry None)
+                                | TY_array (t, dims) -> addVars env vars (ArrayEntry (t, dims, None))
                                 | _                  -> raise (Failure "10 Reached unreachable :("))
   | F_head (name, params, t) -> (match params with (* check oti o typos epistrofhs den einai pinakas *)
                                 | Some ps  -> let env = List.fold_left sem_decl env ps in
@@ -177,9 +177,9 @@ let rec sem_decl env decl =
                                                               | None     -> insertST env name (FunEntry(t, [])))
                                 | _                        -> raise (Failure "11 Reached unreachable :("))
   | V_def (vars, t)          -> (match t with  (* prepei na kanw check gia duplicate variable! dyskolo...*)
-                                | TY_int             -> addVars env vars IntEntry
-                                | TY_char            -> addVars env vars CharEntry
-                                | TY_array (t, dims) -> addVars env vars (ArrayEntry (t, dims))
+                                | TY_int             -> addVars env vars (IntEntry None)
+                                | TY_char            -> addVars env vars (CharEntry None)
+                                | TY_array (t, dims) -> addVars env vars (ArrayEntry (t, dims, None))
                                 | _                  -> raise (Failure "12 Reached unreachable :("))
 
 and sem_localdef env local =
@@ -207,7 +207,14 @@ and sem_stmt env stmt =
   | S_colon _              -> true
   | S_assign (e1, e2)      -> let t1 = sem_expr env e1 in
                               let t2 = sem_expr env e2 in
-                              if t1 = t2 then true else raise (TypeError "left and right values of assignment do not type-match")
+                              begin
+                                match t1, t2 with
+                                | TY_array(_, _), TY_array(_, _) -> true
+                                | TY_int, TY_int -> true
+                                | TY_char, TY_char -> true
+                                | _, _ -> raise (TypeError "left and right values of assignment do not type-match")
+                              end
+                              (* if t1 = t2 then true else raise (TypeError "left and right values of assignment do not type-match") *)
   | S_block stmts          -> let checkList = List.map (sem_stmt env) stmts in
                               not (List.mem false checkList)
   | S_if (c, s)            -> let t = sem_cond c env in
