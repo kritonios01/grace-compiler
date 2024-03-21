@@ -6,4 +6,5 @@ fun hello () : nothing
 	 writeString("fsdfdsfssdfds");
 	 writeString("\x3c\n");
 	 $readInteger();
+	 return;
 }

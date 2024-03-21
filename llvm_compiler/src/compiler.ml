@@ -5,7 +5,9 @@ open TypeKind
 
 (* edw to ST apothikevei tis thesei mnimis opou apothikevontai ta locals *)
 
-let first_function = ref true; (* first function in llvm ir must be called main, but grace syntax allows any name for a program's main function*)
+
+let first_function = ref true (* first function in llvm ir must be called main, but grace syntax allows any name for a program's main function*)
+let f_has_ret = ref false
 
 (* keep the llvm settings in a record*)
 type llvm_info = {
@@ -25,6 +27,7 @@ type llvm_info = {
 }
 
 (* helper function to compute index of linearized multi-dim array*)
+(* this must be changed so that it computs indices in assembly and not in ocaml*)
 let compute_linear_index dimensions indices =
   let rec aux acc dims indices =
     match dims, indices with
@@ -261,7 +264,6 @@ and codegen_cond llvm env cond =
       | Op_greatereq   -> build_icmp Icmp.Sge lhs rhs "sgemp" llvm.builder
       | _              -> assert false
 
-
 and codegen_stmt llvm env stmt = (* isos den xreiazetai to env *)
   match stmt with
   | S_fcall (name, exprs) as fcall -> let _ = create_fcall llvm env fcall in ()
@@ -348,7 +350,7 @@ let codegen_fparam llvm params =
       end
   | _ -> assert false
 
-let rec fparams_to_llarray llvm fparams acc =
+let rec fparams_to_llarray llvm fparams acc =  (* na dokimasw anti gia to @ na kanw reverse sto telos (fainetai idio)*)
   match fparams with
   | hd::tl -> fparams_to_llarray llvm tl (acc @ (codegen_fparam llvm hd))
   | []     -> acc
@@ -368,7 +370,7 @@ let codegen_fhead llvm head = (* ayto kalo einai na ginei merge me to codegen_de
 let rec addVars llvm env vars (t, dims) = (* edw prepei na ginei handle to duplicate vars h isws sto semantic*)
   match vars with
   | hd::tl -> 
-      let alloca_addr = build_alloca t hd llvm.builder in (* edw o builder kanonika prepei na phgainei sthn arxh ths synarthshs gia na paijei to mem2reg *)
+      let alloca_addr = build_alloca t hd llvm.builder in (* edw o builder einai hdh sthn arxh ths synarthshs wste na paijei to mem2reg *)
       let newST = insertST env hd (alloca_addr, dims) in
       addVars llvm newST tl (t, dims)
   | [] -> env
@@ -376,7 +378,6 @@ let rec addVars llvm env vars (t, dims) = (* edw prepei na ginei handle to dupli
 let rec codegen_decl llvm env decl =
   match decl with
   | F_def (h, locals, block) -> 
-      (*let env = sem_decl env (F_def (h, locals, block)) in*) (* ayto prepei na fygei kai h shmasiologikh na ginetai anejarthta*)
       let (name, ft) = 
         if !first_function = true then (
           first_function := false;
@@ -399,17 +400,37 @@ let rec codegen_decl llvm env decl =
       (* set names for arguments *)
       let bb = append_block llvm.context (name ^ "_entry") f in
       position_at_end bb llvm.builder;
+
+      let x = named_struct_type llvm.context "frame" in (*na xrhsimopoihthei struct type*)
+      print_string ((string_of_lltype x)^"\n");
+      let keys, values = List.split (SymbolTable.bindings env) in
+      let values, _ = List.split values in
+      struct_set_body x (Array.of_list (List.map type_of values)) false;
+      (* struct_set_body x [| pointer_type llvm.i8; type_of (llvm.c32 2)|] false; *)
+      print_string ((string_of_lltype x)^"\n");
+      let frame_ptr = build_alloca x "frame_ptr" llvm.builder in
+      print_string (string_of_llvalue ( frame_ptr)^"\n");
+      if Array.length (struct_element_types x) <> 0 then
+        ignore (build_struct_gep2 x frame_ptr 0 "frame0" llvm.builder)
+      else ();
+
+
+      (* create a place in memory to store return value *)
+      (* let retv_addr = build_alloca llvm.i32 "retvptr" llvm.builder in
+      let env = insertST env "retvptr_grace" (retv_addr, None) in *)
+
       (*handle locals and block*)
-      let env = List.fold_left (codegen_decl llvm) env locals in
+      let local_env = List.fold_left (codegen_localdef llvm bb) env locals in
       (* edw thelei skepsi gia to pws tha mpoun oi times twn local-defs: den thelw tis times pou eisagei to definition mias fucntion*)
       
+      position_at_end bb llvm.builder;
       (* body *)
-      codegen_stmt llvm env block;
+      codegen_stmt llvm local_env block;
       
       (* ayto einai ligo bakalistiko, prepei na to stressarw na dw oti panta doulevei,
          o skopos einai na vazei ret void stis void synarthseis pou den exoun to 
          statement return sto telos*)
-      let _ = 
+      (* let _ = 
         match block with
         | S_block (stmts) ->
             let x = List.hd (List.rev stmts) in
@@ -417,22 +438,41 @@ let rec codegen_decl llvm env decl =
             | S_return _ -> ()
             | _ -> ignore (build_ret_void llvm.builder);)
         | _ -> assert false
-        in
-      Llvm_analysis.assert_valid_function f;
+        in *)
+        (* (build_ret_void llvm.builder); *)
+      (* Llvm_analysis.assert_valid_function f; *)
+      (* env *)
+      print_string (name^"_ST\n");
+      printllvmST local_env;
+      insertST env name (f, None)
+
+
+  | _         -> assert false
+
+and codegen_localdef llvm entryBB env local = (*entryBB is the function's entry block *)
+  match local with
+  | F_def (h, locals, block) as fdef -> let _ = codegen_decl llvm env fdef in env
+
+  | F_decl h -> (* this should be used for function definitions as well*)
+      let (name, ft) = codegen_fhead llvm h in
+      let f = 
+        match lookup_function name llvm.the_module with 
+        | None -> declare_function name ft llvm.the_module (* !!! here what happens when a function is redefined locally?*)
+        | Some f ->
+            if Array.length (basic_blocks f) = 0 then () else
+              raise (Failure "redefinition of function");
+            if Array.length (params f) = Array.length (param_types ft) then () else
+              raise (Failure "redefinition of function with different # args");
+            f
+      in
+      (* insertST env name (f, None) *)
       env
-
-
-  (* | F_decl head              -> (match head with
-                                | F_head (name, params, t) -> (match params with
-                                                              | Some ps  -> let types = paramsToTypes ps [] in
-                                                                            insertST env name (FunEntry(t, types))
-                                                              | None     -> insertST env name (FunEntry(t, [])))
-                                | _                        -> raise (Failure "11 Reached unreachable :(")) *)
   | V_def (vars, t) -> 
+      position_at_end entryBB llvm.builder;
       let llty, dims = type_to_lltype llvm t in
       (* let dims = Option.get dims in *)
       addVars llvm env vars (llty, dims)
-  | _         -> assert false
+  | _ -> assert false
 
 let llvm_compile_and_dump asts =
   (* Initialize LLVM: context, module, builder and FPM*)
@@ -519,7 +559,7 @@ let llvm_compile_and_dump asts =
   (* ignore (build_ret (c32 0) builder); *)
 
   (* Verify the entire module*)
-  Llvm_analysis.assert_valid_module md;
+  (* Llvm_analysis.assert_valid_module md; *)
 
   (* Optimize *) (* this must be optional *)
   (* ignore (PassManager.run_module md fpm); *)

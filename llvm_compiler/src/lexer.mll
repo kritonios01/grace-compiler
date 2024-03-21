@@ -13,7 +13,7 @@
     | '\\' -> '\\'
     | '\'' -> '\''
     | '"' -> '"'
-    | _   -> assert false
+    | _   -> assert false (* unreachable *)
 
   exception LexingError of string
 }

@@ -1,6 +1,17 @@
-fun xxx () : int
-	fun yyy () : int
+fun main () : nothing
+	var i, k : int;
+	
+	fun a (x: int; ref c: char) : int
+	$	var i : char;
 	{
+		$i <- 'a';
+		$$i <- 1; edw einai to zoumi$$
+		return 42;
 	}
-{	
+
+	fun b () : char;
+
+{
+	$writeInteger(a());
+	return;
 }

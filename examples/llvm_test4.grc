@@ -11,8 +11,11 @@ fun main () : int
 	$b <- readChar();
 	$writeChar(b);
 	$a <- 5;
-	readString(5, s);
-	writeString(s);
+	$writeString("Give integer: ");
+	$a <- readInteger();
+	$writeString("Give string: ");
+	$readString(5, s);
+	$writeString(s);
 	$s[0] <- 'g';
 	$writeChar(s[0]);
 	$writeChar(readChar());
@@ -21,15 +24,19 @@ fun main () : int
 	$writeInteger(ascii('a'));
 	$writeChar(chr(97));
 	$writeChar('\n');
-	$s[0] <- '7';
-	$s[1] <- '9';
-	$s[2] <- '5';
-	$d[0] <- '7';
-	$d[1] <- '9';
-	$d[2] <- '4';
-	$writeInteger(strlen(s));
+	s[0] <- '7';
+	s[1] <- '9';
+	s[2] <- '5';
+	s[3] <- '\0';
+  d[0] <- '7';
+	d[1] <- '9';
+	d[2] <- '4';
+
+	writeInteger(strlen(s));
 	$writeInteger(strcmp(d, s));
-	$strcpy(d,s);
-	$writeString(d);
+	strcpy(d,s);
+	writeString(d);
+	strcat(d, s);
+	writeString(d);
 	return 0;
 }

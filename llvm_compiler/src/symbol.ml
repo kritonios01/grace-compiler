@@ -63,3 +63,9 @@ let printST mapping =
     Printf.printf "%s -> %s\n" k (string_of_value v) in
   let mapList = SymbolTable.bindings mapping in
   List.map helper mapList
+
+let printllvmST mapping =
+  let keys, _ = List.split (SymbolTable.bindings mapping) in
+  List.iter (Printf.printf "%s ") keys;
+  Printf.printf "\n";
+
