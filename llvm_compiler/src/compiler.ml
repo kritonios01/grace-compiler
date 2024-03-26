@@ -72,12 +72,12 @@ let rec create_fcall llvm env stmt =
         match exprs with
         | Some es -> 
             if Array.length params = List.length es then () else
-              raise (Failure "incorrect # arguments passed");
+              raise (Failure (name^": incorrect # arguments passed"));
             let params, _ = List.split (List.map (codegen_expr llvm env) es) in
             params
         | None ->
             if Array.length params = 0 then () else
-              raise (Failure "incorrect # arguments passed");
+              raise (Failure (name^": incorrect # arguments passed"));
             []
       in
 
@@ -338,6 +338,29 @@ and codegen_stmt llvm env stmt = (* isos den xreiazetai to env *)
           ignore (build_ret n llvm.builder)
       | None -> ignore (build_ret_void llvm.builder)
 
+let createStructType llvm env fname =
+  let values = llvmSTvalues env in
+  struct_type llvm.context (Array.of_list (List.map type_of values))
+
+let createStruct llvm env fname =
+  let x = named_struct_type llvm.context ("frame."^fname) in
+  (* print_string ((string_of_lltype x)^"\n"); *)
+  let keys, values = List.split (SymbolTable.bindings env) in
+  let values, _ = List.split values in
+  struct_set_body x (Array.of_list (List.map type_of values)) false;
+  (* struct_set_body x [| pointer_type llvm.i8; type_of (llvm.c32 2)|] false; *)
+  (* print_string ((string_of_lltype x)^"\n"); *)
+  let frame_ptr = build_alloca x "frame_ptr" llvm.builder in
+  (* print_string (string_of_llvalue ( frame_ptr)^"\n"); *)
+  if Array.length (struct_element_types x) <> 0 then
+    let base_and_store struct_ty index element =
+      let base = (build_struct_gep2 struct_ty frame_ptr index "frame0" llvm.builder) in
+      ignore (build_store element base llvm.builder); 
+      index+1 
+    in ignore (List.fold_left (base_and_store x) 0 values);
+  else ();
+  frame_ptr
+
 let codegen_fparam llvm params = 
   match params with
   | F_params (r, vars, t) -> 
@@ -355,15 +378,16 @@ let rec fparams_to_llarray llvm fparams acc =  (* na dokimasw anti gia to @ na k
   | hd::tl -> fparams_to_llarray llvm tl (acc @ (codegen_fparam llvm hd))
   | []     -> acc
 
-let codegen_fhead llvm head = (* ayto kalo einai na ginei merge me to codegen_decl *)
+let codegen_fhead llvm env head = (* ayto kalo einai na ginei merge me to codegen_decl *)
   match head with
   | F_head (name, params, t) ->
       let ftype, _ = type_to_lltype llvm t in
+      let stackframety = createStructType llvm env name in
       begin
         match params with
-        | Some ps  -> let params = Array.of_list (fparams_to_llarray llvm ps []) in
+        | Some ps  -> let params = Array.of_list (stackframety::(fparams_to_llarray llvm ps [])) in
                       (name, function_type ftype params)
-        | None     -> (name, function_type ftype [| |])
+        | None     -> (name, function_type ftype [| stackframety |])
       end
   | _ -> assert false
 
@@ -375,19 +399,25 @@ let rec addVars llvm env vars (t, dims) = (* edw prepei na ginei handle to dupli
       addVars llvm newST tl (t, dims)
   | [] -> env
 
+
+
+
 let rec codegen_decl llvm env decl =
   match decl with
-  | F_def (h, locals, block) -> 
+  | F_def (h, locals, block) ->
+
       let (name, ft) = 
         if !first_function = true then (
           first_function := false;
-          let (_, ft) = codegen_fhead llvm h in
+          let (_, ft) = codegen_fhead llvm env h in
           let name = "main" in
           (name, ft))
         else
-          codegen_fhead llvm h
+          codegen_fhead llvm env h
       in
       
+      
+
       let f = 
         match lookup_function name llvm.the_module with (* search for function "name" in the context *)
         | None -> declare_function name ft llvm.the_module (*here what happens when a function is redefined locally?*)
@@ -401,18 +431,24 @@ let rec codegen_decl llvm env decl =
       let bb = append_block llvm.context (name ^ "_entry") f in
       position_at_end bb llvm.builder;
 
-      let x = named_struct_type llvm.context "frame" in (*na xrhsimopoihthei struct type*)
-      print_string ((string_of_lltype x)^"\n");
+      (*
+      let x = named_struct_type llvm.context ("frame."^name) in (*na xrhsimopoihthei struct type*)
+      (* print_string ((string_of_lltype x)^"\n"); *)
       let keys, values = List.split (SymbolTable.bindings env) in
       let values, _ = List.split values in
       struct_set_body x (Array.of_list (List.map type_of values)) false;
       (* struct_set_body x [| pointer_type llvm.i8; type_of (llvm.c32 2)|] false; *)
-      print_string ((string_of_lltype x)^"\n");
+      (* print_string ((string_of_lltype x)^"\n"); *)
       let frame_ptr = build_alloca x "frame_ptr" llvm.builder in
-      print_string (string_of_llvalue ( frame_ptr)^"\n");
+      (* print_string (string_of_llvalue ( frame_ptr)^"\n"); *)
       if Array.length (struct_element_types x) <> 0 then
-        ignore (build_struct_gep2 x frame_ptr 0 "frame0" llvm.builder)
+        let base_and_store struct_ty index element =
+          let base = (build_struct_gep2 struct_ty frame_ptr index "frame0" llvm.builder) in
+          ignore (build_store element base llvm.builder); 
+          index+1 
+        in ignore (List.fold_left (base_and_store x) 0 values);
       else ();
+      *)
 
 
       (* create a place in memory to store return value *)
@@ -442,19 +478,27 @@ let rec codegen_decl llvm env decl =
         (* (build_ret_void llvm.builder); *)
       (* Llvm_analysis.assert_valid_function f; *)
       (* env *)
+
+
+
       print_string (name^"_ST\n");
       printllvmST local_env;
-      insertST env name (f, None)
+
+
+
+      (* insertST env name (f, None) ayto mallon den prepei na mpei *)
+      env
 
 
   | _         -> assert false
 
 and codegen_localdef llvm entryBB env local = (*entryBB is the function's entry block *)
   match local with
-  | F_def (h, locals, block) as fdef -> let _ = codegen_decl llvm env fdef in env
+  | F_def (h, locals, block) as fdef -> 
+      let _ = codegen_decl llvm env fdef in env
 
   | F_decl h -> (* this should be used for function definitions as well*)
-      let (name, ft) = codegen_fhead llvm h in
+      let (name, ft) = codegen_fhead llvm env h in
       let f = 
         match lookup_function name llvm.the_module with 
         | None -> declare_function name ft llvm.the_module (* !!! here what happens when a function is redefined locally?*)

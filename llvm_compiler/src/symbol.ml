@@ -65,7 +65,14 @@ let printST mapping =
   List.map helper mapList
 
 let printllvmST mapping =
-  let keys, _ = List.split (SymbolTable.bindings mapping) in
-  List.iter (Printf.printf "%s ") keys;
-  Printf.printf "\n";
+  let open Llvm in
+  let keys, values = List.split (SymbolTable.bindings mapping) in
+  let (vs, _) = List.split values in
+  let vs = List.map (fun x -> string_of_lltype (type_of x)) vs in
+  List.iter2 (Printf.printf "%s -> %s | ") keys vs;
+  Printf.printf "\n"
 
+let llvmSTvalues mapping =
+  let keys, values = List.split (SymbolTable.bindings mapping) in
+  let values, _ = List.split values in
+  values
