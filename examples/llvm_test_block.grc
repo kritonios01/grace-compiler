@@ -2,18 +2,11 @@ fun main () : nothing
 	var i, k : int;
 	
 	fun a () : int
-	$	var i : char;
 	{
-		$i <- 'a';
-		$$i <- 1; edw einai to zoumi$$
 		i <- 5;
 		return 42;
 	}
-
-	fun b () : char;
-
 {
-	$writeInteger(a());
 	i <- 1;
 	writeInteger(i);
 	a ();

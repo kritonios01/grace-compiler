@@ -24,6 +24,7 @@ type llvm_info = {
   c64              : int -> llvalue;
   void             : lltype;
   the_vars         : llvalue;
+  predefined_fs    : string list;
 }
 
 (* helper function to compute index of linearized multi-dim array*)
@@ -58,6 +59,29 @@ let retrieve_index e =
   | _             -> assert false
 
 
+let createStructType llvm env = (* returns a struct with all values in the ST at the time of calling *)
+  let keys, values = llvmSTvalues env in 
+  struct_type llvm.context (Array.of_list (List.map type_of values))
+
+let createStackFrame llvm env fname =
+  let frame = named_struct_type llvm.context ("frame."^fname) in
+  let values = llvmSTvalues env in
+  struct_set_body frame (Array.of_list (List.map type_of values)) false;
+
+  let frame_ptr = build_alloca frame "frame_ptr" llvm.builder in
+
+  if Array.length (struct_element_types frame) <> 0 then
+    let base_and_store struct_ty index element =
+      let base = (build_struct_gep2 struct_ty frame_ptr index "frame" llvm.builder) in
+      ignore (build_store element base llvm.builder); 
+      index+1 
+    in ignore (List.fold_left (base_and_store frame) 0 values);
+  else ();
+  print_string (string_of_lltype frame);
+  frame_ptr
+
+
+
 let rec create_fcall llvm env stmt =
   match stmt with
   | S_fcall (name, exprs) -> (* otan kaleitai mia synarthsh prepei na kanei alloca ta vars ths?? *)
@@ -68,21 +92,23 @@ let rec create_fcall llvm env stmt =
       let frt = (return_type (type_of f)) in (*regarding these: for writeInt (f is void (i64)* ), (type_of f is void (i64)), (element_type type_of f is void)*)
       let actual_frt = element_type frt in
       let params = params f in
+      let upper = if List.mem name llvm.predefined_fs then 0 else 1 in (* ayto einai hardcoded -> kako. an ginoun override oi predefined den tha paizei swsta. ousiastika ayto ginetai gia na min pernaei stack frame stis prokathorismenes synarthseis oi opoies einia vevaio oti xreiazontai mono tis parametrous tous. enallaktika gia aplothta tha mporouse na pernaei to stack frame kai se aytes kai as einai axreiasto *)
       let ll_args =
         match exprs with
         | Some es -> 
-            if Array.length params = List.length es then () else
-              raise (Failure (name^": incorrect # arguments passed"));
+            if Array.length params = List.length es + upper then () else
+              raise (Failure (name^"(...): incorrect # arguments passed"));
             let params, _ = List.split (List.map (codegen_expr llvm env) es) in
+            (* List.iter (fun x -> print_string (string_of_llvalue x)) params; to be removed *)
             params
         | None ->
-            if Array.length params = 0 then () else
-              raise (Failure (name^": incorrect # arguments passed"));
+            if Array.length params = 0 + upper then () else
+              raise (Failure (name^"(): incorrect # arguments passed"));
             []
       in
 
       (* print_string (string_of_lltype (type_of f)); *)
-
+      
 
       let fix_arg arg = 
         let ty = type_of arg in
@@ -106,7 +132,13 @@ let rec create_fcall llvm env stmt =
           let opaque_ptr = build_bitcast var_ptr (pointer_type2 llvm.context) "ptr" llvm.builder in
           opaque_ptr *)
       in
-      let ll_args = Array.of_list (List.map fix_arg ll_args) in
+      let fixed_args = List.map fix_arg ll_args in
+      let ll_args = 
+        if upper = 1 then 
+          let stackframe = createStackFrame llvm env name in
+          Array.of_list (stackframe::fixed_args) 
+        else 
+          Array.of_list fixed_args in
 
 
       begin
@@ -338,28 +370,9 @@ and codegen_stmt llvm env stmt = (* isos den xreiazetai to env *)
           ignore (build_ret n llvm.builder)
       | None -> ignore (build_ret_void llvm.builder)
 
-let createStructType llvm env fname =
-  let values = llvmSTvalues env in
-  struct_type llvm.context (Array.of_list (List.map type_of values))
 
-let createStruct llvm env fname =
-  let x = named_struct_type llvm.context ("frame."^fname) in
-  (* print_string ((string_of_lltype x)^"\n"); *)
-  let keys, values = List.split (SymbolTable.bindings env) in
-  let values, _ = List.split values in
-  struct_set_body x (Array.of_list (List.map type_of values)) false;
-  (* struct_set_body x [| pointer_type llvm.i8; type_of (llvm.c32 2)|] false; *)
-  (* print_string ((string_of_lltype x)^"\n"); *)
-  let frame_ptr = build_alloca x "frame_ptr" llvm.builder in
-  (* print_string (string_of_llvalue ( frame_ptr)^"\n"); *)
-  if Array.length (struct_element_types x) <> 0 then
-    let base_and_store struct_ty index element =
-      let base = (build_struct_gep2 struct_ty frame_ptr index "frame0" llvm.builder) in
-      ignore (build_store element base llvm.builder); 
-      index+1 
-    in ignore (List.fold_left (base_and_store x) 0 values);
-  else ();
-  frame_ptr
+
+
 
 let codegen_fparam llvm params = 
   match params with
@@ -382,7 +395,7 @@ let codegen_fhead llvm env head = (* ayto kalo einai na ginei merge me to codege
   match head with
   | F_head (name, params, t) ->
       let ftype, _ = type_to_lltype llvm t in
-      let stackframety = createStructType llvm env name in
+      let stackframety = createStructType llvm env in
       begin
         match params with
         | Some ps  -> let params = Array.of_list (stackframety::(fparams_to_llarray llvm ps [])) in
@@ -578,6 +591,11 @@ let llvm_compile_and_dump asts =
   let _ = declare_function "strcpy" strcpy_ty md in
   let _ = declare_function "strcat" strcat_ty md in
 
+  let predefined = ["writeInteger"; "writeChar"; "writeString"; 
+                    "readInteger"; "readChar"; "readString"; 
+                    "ascii"; "chr"; "strlen"; "strcmp"; 
+                    "strcpy"; "strcat"] in
+
   (* let predefined_env = addPredefined emptyST in *)
 
   (* gather all info in a record for later use *)
@@ -595,6 +613,7 @@ let llvm_compile_and_dump asts =
     c64              = c64;
     void             = void;
     the_vars         = the_vars;
+    predefined_fs    = predefined;
   } in
 
 
