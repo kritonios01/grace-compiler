@@ -75,4 +75,4 @@ let printllvmST mapping =
 let llvmSTvalues mapping =
   let keys, values = List.split (SymbolTable.bindings mapping) in
   let values, _ = List.split values in
-  values
+  keys, values
