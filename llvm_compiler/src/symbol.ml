@@ -13,8 +13,14 @@ type env_entry =
   (* | FunEntry of  *)
 
 
+type ll_env_entry =
+  | BasicEntry of Llvm.llvalue (* this is for int64, int8, poitners to all these and void (andalso array elements obsiously)*)
+  | CompositeEntry of Llvm.llvalue * int list (* this is for arrays *)
+  | StackFrameEntry of ll_env_entry * Llvm.llvalue * int (* env_entry is for the original type, llvalue is for the struct and int is the place in the stack *)
 
-module SymbolTable = Map.Make(struct
+
+
+module SymbolTable = Map.Make(struct (* mporei episis na fygei teleiws ayto kai na meinei Map.Make(String)*)
     type t = symbol
     let compare = Stdlib.compare
   end)
@@ -64,15 +70,20 @@ let printST mapping =
   let mapList = SymbolTable.bindings mapping in
   List.map helper mapList
 
-let printllvmST mapping =
-  let open Llvm in
-  let keys, values = List.split (SymbolTable.bindings mapping) in
-  let (vs, _) = List.split values in
-  let vs = List.map (fun x -> string_of_lltype (type_of x)) vs in
-  List.iter2 (Printf.printf "%s -> %s | ") keys vs;
-  Printf.printf "\n"
-
 let llvmSTvalues mapping =
   let keys, values = List.split (SymbolTable.bindings mapping) in
-  let values, _ = List.split values in
+  let extract_llvalue x =
+    match x with
+    | BasicEntry llv              -> llv
+    | CompositeEntry (llv, _)     -> llv
+    | StackFrameEntry (_, llv, _) -> llv in
+  let values = List.map extract_llvalue values in
   keys, values
+
+let printllvmST mapping =
+  let open Llvm in
+  let keys, values = llvmSTvalues mapping in
+  List.map (fun x -> string_of_lltype (type_of x)) values
+  |> List.iter2 (Printf.printf "%s -> %s | ") keys ;
+  Printf.printf "\n"
+

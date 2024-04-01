@@ -3,13 +3,15 @@ fun main () : nothing
 	
 	fun a () : int
 	{
-		i <- 5;
+		i <- 2;
+		k <- 5;
 		return 42;
 	}
 {
-	i <- 1;
-	writeInteger(i);
+	k <- 1;
+	$writeInteger(k);
 	a ();
+	writeInteger(k);
 	writeInteger(i);
 	return;
 }

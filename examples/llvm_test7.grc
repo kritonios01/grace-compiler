@@ -1,9 +1,9 @@
 fun main () : nothing
 	var i : int;
-	$var ar : int[10];
+	var ar : int[10];
 {
-	$i <- 0;
-	$ar[0] <- 8;$this doesn't work yet
+	i <- 0;
+	ar[4] <- 8;$this doesn't work yet
 	$return 4;
 	return;
 }

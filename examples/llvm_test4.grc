@@ -33,6 +33,7 @@ fun main () : int
 	d[2] <- '4';
 
 	writeInteger(strlen(s));
+	writeChar('\n');
 	$writeInteger(strcmp(d, s));
 	strcpy(d,s);
 	writeString(d);

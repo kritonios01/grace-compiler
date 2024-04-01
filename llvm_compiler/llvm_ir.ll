@@ -1,18 +1,13 @@
 ; ModuleID = 'grace program'
 source_filename = "grace program"
 
-%frame.a = type { i64*, i64* }
-%frame.a.0 = type { i64*, i64* }
-
-@vars = private global [26 x i64] zeroinitializer, align 16
-
 declare void @writeInteger(i64)
 
 declare void @writeChar(i8)
 
 declare void @writeString(ptr)
 
-declare i32 @readInteger()
+declare i64 @readInteger()
 
 declare i8 @readChar()
 
@@ -30,29 +25,30 @@ declare void @strcpy(ptr, ptr)
 
 declare void @strcat(ptr, ptr)
 
-define void @main() {
+define i64 @main() {
 main_entry:
+  %a = alloca [125 x i64], align 8
   %i = alloca i64, align 8
+  %j = alloca i64, align 8
   %k = alloca i64, align 8
-  %frame.a_ptr = alloca %frame.a, align 8
-  store i64 1, i64* %i, align 4
-  %farg = load i64, i64* %i, align 4
+  store i64 0, i64* %i, align 4
+  store i64 4, i64* %j, align 4
+  %rvload = load i64, i64* %j, align 4
+  store i64 %rvload, i64* %k, align 4
+  %index_load = load i64, i64* %i, align 4
+  %index_load1 = load i64, i64* %j, align 4
+  %index_load2 = load i64, i64* %k, align 4
+  %multmp = mul i64 %index_load2, 1
+  %addtmp = add i64 0, %multmp
+  %multmp3 = mul i64 %index_load1, 5
+  %addtmp4 = add i64 %addtmp, %multmp3
+  %multmp5 = mul i64 %index_load, 25
+  %addtmp6 = add i64 %addtmp4, %multmp5
+  %matrixptr = getelementptr [125 x i64], [125 x i64]* %a, i64 0, i64 %addtmp6
+  store i64 50265, i64* %matrixptr, align 4
+  %matrixptr7 = getelementptr [125 x i64], [125 x i64]* %a, i64 0, i64 24
+  %farg = load i64, i64* %matrixptr7, align 4
   call void @writeInteger(i64 %farg)
-  %frame_ptr = alloca %frame.a.0, align 8
-  %frame = getelementptr inbounds %frame.a.0, %frame.a.0* %frame_ptr, i32 0, i32 0
-  store i64* %i, i64** %frame, align 8
-  %frame1 = getelementptr inbounds %frame.a.0, %frame.a.0* %frame_ptr, i32 0, i32 1
-  store i64* %k, i64** %frame1, align 8
-  %aret = call i64 @a(%frame.a.0* %frame_ptr)
-  %farg2 = load i64, i64* %i, align 4
-  call void @writeInteger(i64 %farg2)
-  ret void
-}
-
-define i64 @a(%frame.a* %0) {
-a_entry:
-  %frame_var = getelementptr inbounds %frame.a, %frame.a* %0, i32 0, i32 0
-  %lvload = load i64*, i64** %frame_var, align 8
-  store i64 5, i64* %lvload, align 4
-  ret i64 42
+  call void @writeChar(i8 10)
+  ret i64 1
 }
