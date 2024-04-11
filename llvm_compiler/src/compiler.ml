@@ -111,6 +111,7 @@ let createStructType llvm env fname =
   let keys, values = llvmSTvalues env in
   let st_pairs = List.combine keys values in
   struct_set_body frame (Array.of_list (List.map type_of values)) false;
+  (* List.iter (fun x -> print_string (string_of_lltype (type_of x))) values; *)
 
   let frame_ptr = build_alloca frame ("frame."^fname^"_ptr") llvm.builder in
   
@@ -118,14 +119,28 @@ let createStructType llvm env fname =
   if List.length st_pairs <> 0 then (* store each value in ST in the struct and update the ST so that these values point to their new place *)
     let store_and_updateST (index, env) (k, v) =
       let base = (build_struct_gep2 frame frame_ptr index ("frame_elem_"^(string_of_int index)) llvm.builder) in
+      (* print_string (string_of_llvalue (base)); *)
+      (* print_char '\n'; *)
+      (* print_string (string_of_llvalue (v)); *)
+      (* print_string "\n"; *) 
+      print_string (string_of_lltype (element_type (type_of base)));
+      (* print_string (string_of_lltype (element_type (type_of v))); *)
+      (* let opaq = build_bitcast base (pointer_type2 llvm.context) "ptr" llvm.builder in *)
+    
+      (* print_char '\n'; *)
+      (* print_string (string_of_lltype (type_of v)); *)
+      print_string "\n\n";
+
+
       ignore (build_store v base llvm.builder); 
 
       let replace x =
         match x with
         | Some ll_entry ->
             (match ll_entry with
-            | BasicEntry _              -> Some (StackFrameEntry (ll_entry, frame_ptr, index))
-            | CompositeEntry (_, _)     -> Some (StackFrameEntry (ll_entry, frame_ptr, index))
+            | BasicEntry _ 
+            | CompositeEntry (_, _) 
+            | FuncParamEntry _          -> Some (StackFrameEntry (ll_entry, frame_ptr, index))
             | _                         -> assert false)
         | None -> assert false in
 
@@ -160,6 +175,7 @@ let rec create_fcall llvm func env stmt =
                 match x with
                 | BasicEntry v -> v
                 | CompositeEntry (v, _) -> v
+                | FuncParamEntry v      -> v
                 | _ -> assert false in
               List.map (fun x -> get_llv (codegen_expr llvm func env x)) es in
 
@@ -490,35 +506,37 @@ and codegen_stmt llvm func env stmt = (* isos den xreiazetai to env *)
 
 
 
-let codegen_fparam llvm params = 
-  match params with
-  | F_params (r, vars, t) -> 
-      begin
-        match r with
-        | Some _  -> List.map (fun _ -> pointer_type2 llvm.context) vars
+
+
+let params_to_names_and_lltypes llvm fparams =
+  let fparams_helper acc params = 
+    match params with
+    | F_params (r, vars, t) -> 
+        (match r with
+        | Some _  -> vars::acc, List.map (fun _ -> pointer_type2 llvm.context) vars
         | None -> 
             let ty, _ = type_to_lltype llvm t in 
-            List.map (fun _ -> ty) vars
-      end
-  | _ -> assert false
+            vars::acc, List.map (fun _ -> ty) vars)
+    | _ -> assert false in
 
-let rec fparams_to_llarray llvm fparams acc =  (* na dokimasw anti gia to @ na kanw reverse sto telos (fainetai idio)*)
-  match fparams with
-  | hd::tl -> fparams_to_llarray llvm tl (acc @ (codegen_fparam llvm hd))
-  | []     -> acc
+  (* the logic behind this is that we accumulate all variable names and map each variable to its type *)
+  List.fold_left_map (fparams_helper) [] fparams  (* returns a tuple: string list list, lltype list list*)
+  |> fun (names, lltypes) -> 
+      List.(rev names |> concat, lltypes |> concat)
 
-let codegen_fhead llvm sframe env head = (* ayto kalo einai na ginei merge me to codegen_decl *)
+let codegen_fhead llvm sframe head = (* ayto kalo einai na ginei merge me to codegen_decl *)
   match head with
   | F_head (name, params, t) ->
       let ftype, _ = type_to_lltype llvm t in
-      let params =
+      let var_names, fparams =
         match params with
-        | Some ps -> fparams_to_llarray llvm ps []
-        | None    -> [] in
+        | Some ps -> params_to_names_and_lltypes llvm ps (* fparams_to_llarray returns list, not array :) *)
+        | None    -> [], [] in
+      (* List.iter print_string var_names; *)
       begin
         match sframe with
-        | Some s -> (name, function_type ftype (Array.of_list (type_of s::params)))
-        | None   -> (name, function_type ftype (Array.of_list params))
+        | Some s -> (name, var_names, function_type ftype (Array.of_list (type_of s::fparams)))
+        | None   -> (name, var_names, function_type ftype (Array.of_list fparams))
       end
   | _ -> assert false
 
@@ -540,14 +558,13 @@ let rec codegen_decl llvm sframe env decl =
   match decl with
   | F_def (h, locals, block) ->
 
-      let (name, ft) = 
+      let (name, var_names, ft) = 
         if !first_function = true then (
-          let (_, ft) = codegen_fhead llvm sframe env h in
-          let name = "main" in
+          let (_, param_names, ft) = codegen_fhead llvm sframe h in
           first_function := false;
-          (name, ft))
+          ("main", param_names, ft))
         else
-          codegen_fhead llvm sframe env h
+          codegen_fhead llvm sframe h
       in
       
       
@@ -561,6 +578,24 @@ let rec codegen_decl llvm sframe env decl =
             if Array.length (params f) = Array.length (param_types ft) then () else
               raise (Failure "redefinition of function with different # args");
             f in
+
+      
+
+
+
+      let env = 
+        if List.length var_names <> 0 then 
+          List.fold_left2 (fun e name param ->
+            set_value_name name param;
+            insertST e name (FuncParamEntry param)
+          ) env var_names (params f |> Array.to_list |> List.tl) 
+        else
+          env in
+
+      (* print_string ((string_of_llvalue f));
+      Array.iter (fun x -> print_string ("\t"^(string_of_llvalue x)^"\n")) (params f);
+      printllvmST env; *)
+
 
       (* if name <> "main" then set_value_name (Option.get sname) (params f).(0); *)
       (* set names for arguments *)
@@ -640,7 +675,7 @@ let rec codegen_decl llvm sframe env decl =
           ignore (build_ret default_return_value builder) *)
 
       
-      (* Llvm_analysis.assert_valid_function f; *)
+      Llvm_analysis.assert_valid_function f;
       (* env *)
 
 
@@ -669,7 +704,7 @@ and codegen_localdef llvm entryBB (func, env) local = (*entryBB is the function'
       ({func with stack_frames = FunctionsToFrames.add name frame_ptr func.stack_frames}, env)
 
   | F_decl h -> (* this should be used for function definitions as well*)
-      let (name, ft) = codegen_fhead llvm None env h in
+      let (name, var_names, ft) = codegen_fhead llvm None  h in
       let f = 
         match lookup_function name llvm.the_module with 
         | None -> declare_function name ft llvm.the_module (* !!! here what happens when a function is redefined locally?*)
@@ -679,7 +714,7 @@ and codegen_localdef llvm entryBB (func, env) local = (*entryBB is the function'
             if Array.length (params f) = Array.length (param_types ft) then () else
               raise (Failure "redefinition of function with different # args");
             f
-      in
+      in 
       (* insertST env name (f, None) *)
       (func, env)
   | V_def (vars, t) -> 
@@ -696,7 +731,7 @@ let llvm_compile_and_dump asts =
   let md = create_module ctx "grace program" in
   let builder = builder ctx in
   let fpm = PassManager.create () in
-  List.iter (fun optimization -> optimization fpm) [
+  List.iter (fun optim -> optim fpm) [
     Llvm_scalar_opts.add_memory_to_register_promotion;
     Llvm_scalar_opts.add_instruction_combination;
     Llvm_scalar_opts.add_reassociation;
@@ -743,6 +778,7 @@ let llvm_compile_and_dump asts =
   let _ = declare_function "strcpy" strcpy_ty md in
   let _ = declare_function "strcat" strcat_ty md in
 
+
   let predefined = ["writeInteger"; "writeChar"; "writeString"; 
                     "readInteger"; "readChar"; "readString"; 
                     "ascii"; "chr"; "strlen"; "strcmp"; 
@@ -773,7 +809,7 @@ let llvm_compile_and_dump asts =
   (* ignore (build_ret (c32 0) builder); *)
 
   (* Verify the entire module*)
-  (* Llvm_analysis.assert_valid_module md; *)
+  Llvm_analysis.assert_valid_module md;
 
   (* Optimize *) (* this must be optional *)
   (* ignore (PassManager.run_module md fpm); *)

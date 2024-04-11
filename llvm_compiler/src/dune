@@ -29,6 +29,8 @@
 			symbol 
 			compiler)
 	(modules main parser lexer)
+	;(link_flags -cclib -L/usr/lib/llvm15/lib -cclib -lLLVM-15 -ccopt -I/usr/lib/llvm15/include -cclib -lstdc++)
+ ;(c_library_flags -L/usr/lib/llvm15/lib -lstdc++ -lLLVM-15)
 )
 
 (library

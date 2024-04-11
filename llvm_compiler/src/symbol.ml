@@ -16,6 +16,7 @@ type env_entry =
 type ll_env_entry =
   | BasicEntry of Llvm.llvalue (* this is for int64, int8, poitners to all these and void (andalso array elements obsiously)*)
   | CompositeEntry of Llvm.llvalue * int list (* this is for arrays *)
+  | FuncParamEntry of Llvm.llvalue
   | StackFrameEntry of ll_env_entry * Llvm.llvalue * int (* env_entry is for the original type, llvalue is for the struct and int is the place in the stack *)
 
 
@@ -76,6 +77,7 @@ let llvmSTvalues mapping =
     match x with
     | BasicEntry llv              -> llv
     | CompositeEntry (llv, _)     -> llv
+    | FuncParamEntry llv          -> llv
     | StackFrameEntry (_, llv, _) -> llv in
   let values = List.map extract_llvalue values in
   keys, values
