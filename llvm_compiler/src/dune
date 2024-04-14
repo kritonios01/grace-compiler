@@ -42,7 +42,14 @@
 			llvm.all_backends
 			llvm.analysis
 			ast
-			symbol)
+			symbol
+			compiler_helpers)
+)
+
+(library
+		(name compiler_helpers)
+		(modules compiler_helpers)
+		(libraries symbol llvm)
 )
 
 ; sto telos na kanw ena hide warnings

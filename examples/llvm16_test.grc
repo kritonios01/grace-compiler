@@ -1,0 +1,18 @@
+fun hello () : nothing
+	var i : int;
+	var ar : int[6]; 
+
+	fun x (ref str : char[]; k : int) : nothing
+	{
+		k <- 1;
+		writeInteger(k);
+		writeString(str);
+		writeChar('\n');
+	}
+
+{
+	$x("aabb\n",1);
+	$writeString("aaab\n");
+
+	i <- 0;
+}

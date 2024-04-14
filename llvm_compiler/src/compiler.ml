@@ -2,91 +2,10 @@ open Llvm
 open Ast
 open Symbol
 open TypeKind
+open Compiler_helpers
 
-(* edw to ST apothikevei tis thesei mnimis opou apothikevontai ta locals *)
-
-
-let first_function = ref true (* first function in llvm ir must be called main, but grace syntax allows any name for a program's main function*)
-let f_has_ret = ref false
-
-(* keep the llvm settings in a record*)
-type llvm_info = {
-  context          : llcontext;
-  the_module       : llmodule;
-  builder          : llbuilder;
-  i1               : lltype;
-  i8               : lltype;
-  i32              : lltype;
-  i64              : lltype;
-  c1               : int -> llvalue;
-  c8               : int -> llvalue;
-  c32              : int -> llvalue;
-  c64              : int -> llvalue;
-  void             : lltype;
-  predefined_fs    : string list;
-}
-
-module FunctionsToFrames = Map.Make(String)
-
-(* in each function, keep its information*)
-type func_info = {
-  the_f   : llvalue;
-  stack_frames : llvalue FunctionsToFrames.t;
-}
-
-(* helper function to compute index of linearized multi-dim array*)
-(* this must be changed so that it computs indices in assembly and not in ocaml*)
-let compute_linear_index dimensions indices =
-  let rec aux acc dims indices =
-    match dims, indices with
-    | [], [] -> acc
-    | d :: rest_dims, i :: rest_indices ->
-      let acc' = acc * d + i in
-      aux acc' rest_dims rest_indices
-    | _ -> failwith "Mismatched dimensions and indices"
-  in
-  aux 0 dimensions indices
-
-  
-let compute_linear_index2 llvm dims indices =
-  let open List in
-  (* let int_type = i32_type llvm.context in *)
-  let zero = llvm.c64 0 in
-  let one = llvm.c64 1 in
-  
-  (* Reverse dimensions for easier processing, because we calculate from the last dimension *)
-  let rev_dims = rev dims in
-  
-  (* Function to fold over each dimension and index to generate the multiplication and addition *)
-  let folder (acc, prod) (dim, index) =
-    let dim_val = llvm.c64 dim in
-    let offset = build_mul index prod "multmp" llvm.builder in
-    let new_acc = build_add acc offset "addtmp" llvm.builder in
-    let new_prod = build_mul prod dim_val "prodtmpp" llvm.builder in
-    (new_acc, new_prod)
-  in
-  
-  (* Initial accumulator for fold is (0, 1) because index = 0 + i_1 * 1 initially *)
-  let initial = (zero, one) in
-
-  (* Process each dimension and its corresponding index *)
-  let (linear_index, _) = fold_left folder initial (combine rev_dims (rev indices)) in
-  
-  linear_index
-  
-
-
-
-let extract_entry x =
-  match x with
-  | BasicEntry llv -> llv
-  | StackFrameEntry (_, struct_, _) -> struct_
-  | _ -> assert false
-
-let extract_struct_info x =
-  match x with
-  | StackFrameEntry (orig, _, pos) -> (orig, pos)  (* isos na min xreiazetai katholou to original, px sto S_assign *)
-  | _ -> assert false
+(* first function in llvm ir must be called main, but grace syntax allows any name for a program's main function*)
+let first_function = ref true 
 
 
 let rec type_to_lltype llvm ty =
@@ -107,40 +26,41 @@ let retrieve_index e =
 
 (* returns a pointer to the struct with all values in the ST at the time of calling and the new environment with keys mapped to their place in the struct *)
 let createStructType llvm env fname =
-  let frame = named_struct_type llvm.context ("frame."^fname) in
+  let frame = named_struct_type llvm.ctx ("frame."^fname) in
   let keys, values = llvmSTvalues env in
   let st_pairs = List.combine keys values in
   struct_set_body frame (Array.of_list (List.map type_of values)) false;
   (* List.iter (fun x -> print_string (string_of_lltype (type_of x))) values; *)
 
-  let frame_ptr = build_alloca frame ("frame."^fname^"_ptr") llvm.builder in
+  let frame_ptr = build_alloca frame ("frame."^fname^"_ptr") llvm.bd in
   
   (* prepei na ginei kapoio filtering wste na min vazei ta panta *)
-  if List.length st_pairs <> 0 then (* store each value in ST in the struct and update the ST so that these values point to their new place *)
+  if List.length st_pairs <> 0 then 
+    (* store each value in ST in the struct and update the ST so that these values point to their new place *)
     let store_and_updateST (index, env) (k, v) =
-      let base = (build_struct_gep2 frame frame_ptr index ("frame_elem_"^(string_of_int index)) llvm.builder) in
+      let base = (build_struct_gep frame frame_ptr index ("frame_elem_"^(string_of_int index)) llvm.bd) in
       (* print_string (string_of_llvalue (base)); *)
       (* print_char '\n'; *)
       (* print_string (string_of_llvalue (v)); *)
       (* print_string "\n"; *) 
-      print_string (string_of_lltype (element_type (type_of base)));
+      (* print_string (string_of_lltype (element_type (type_of base))); *)
       (* print_string (string_of_lltype (element_type (type_of v))); *)
-      (* let opaq = build_bitcast base (pointer_type2 llvm.context) "ptr" llvm.builder in *)
+      (* let opaq = build_bitcast base (pointer_type2 llvm.ctx) "ptr" llvm.bd in *)
     
       (* print_char '\n'; *)
       (* print_string (string_of_lltype (type_of v)); *)
       print_string "\n\n";
 
 
-      ignore (build_store v base llvm.builder); 
+      ignore (build_store v base llvm.bd); 
 
       let replace x =
         match x with
         | Some ll_entry ->
             (match ll_entry with
             | BasicEntry _ 
-            | CompositeEntry (_, _) 
-            | FuncParamEntry _          -> Some (StackFrameEntry (ll_entry, frame_ptr, index))
+            | CompositeEntry (_, _, _) 
+            | FuncParamEntry (_, _)          -> Some (StackFrameEntry (ll_entry, frame_ptr, index))
             | _                         -> assert false)
         | None -> assert false in
 
@@ -155,64 +75,41 @@ let createStructType llvm env fname =
 
 let rec create_fcall llvm func env stmt =
   match stmt with
-  | S_fcall (name, exprs) -> (* otan kaleitai mia synarthsh prepei na kanei alloca ta vars ths?? *)
+  | S_fcall (name, exprs) ->
+      let upper = if List.mem name llvm.predefined_fs then 0 else 1 in (* ayto einai hardcoded -> kako. an ginoun override oi predefined den tha paizei swsta. ousiastika ayto ginetai gia na min pernaei stack frame stis prokathorismenes synarthseis oi opoies einia vevaio oti xreiazontai mono tis parametrous tous. enallaktika gia aplothta tha mporouse na pernaei to stack frame kai se aytes kai as einai axreiasto *)
+
       let f = 
-        match lookup_function name llvm.the_module with
+        match lookup_function name llvm.md with
         | Some f -> f
         | None -> raise (Failure "unknown function referenced") in
-      let frt = (return_type (type_of f)) in (*regarding these: for writeInt (f is void (i64)* ), (type_of f is void (i64)), (element_type type_of f is void)*)
-      let actual_frt = element_type frt in
-      let params = params f in
-      let upper = if List.mem name llvm.predefined_fs then 0 else 1 in (* ayto einai hardcoded -> kako. an ginoun override oi predefined den tha paizei swsta. ousiastika ayto ginetai gia na min pernaei stack frame stis prokathorismenes synarthseis oi opoies einia vevaio oti xreiazontai mono tis parametrous tous. enallaktika gia aplothta tha mporouse na pernaei to stack frame kai se aytes kai as einai axreiasto *)
-      let ll_args =
-        match exprs with
-        | Some es -> 
-            if Array.length params = List.length es + upper then () else
-              raise (Failure (name^"(...): incorrect # arguments passed"));
-            (* let params, _ = List.split (List.map (codegen_expr llvm env) es) in *)
-            let params =
-              let get_llv x =
-                match x with
-                | BasicEntry v -> v
-                | CompositeEntry (v, _) -> v
-                | FuncParamEntry v      -> v
-                | _ -> assert false in
-              List.map (fun x -> get_llv (codegen_expr llvm func env x)) es in
 
-            (* List.iter (fun x -> print_string (string_of_llvalue x)) params; to be removed *)
-            params
-        | None ->
-            if Array.length params = 0 + upper then () else
-              raise (Failure (name^"(): incorrect # arguments passed"));
-            []
-      in
-
-      (* print_string (string_of_lltype (type_of f)); *)
+      let fparams = params f in
       
+      let args =
+        let ast_args = Option.value exprs ~default:[] in
+        if Array.length fparams = List.length ast_args + upper then () else
+          raise (Failure (name^"(...): incorrect # arguments passed"));
+        ast_args in
+
 
       let fix_arg arg = 
-        let ty = type_of arg in
-        let element_ty = element_type (type_of arg) in
-        (* print_string ((string_of_lltype (type_of arg)) ^ " ");
-        print_string ((string_of_lltype (element_type (type_of arg))) ^ " "); *)
-        match classify_type ty with (* ola ayta ejartwntai apo to an einai ref!*)
+        let ll_env_arg = codegen_expr llvm func env arg in
+        let llv = extract_ST_llv ll_env_arg in
+
+        match classify_type (type_of llv) with
         | Pointer -> 
-            begin
-              match classify_type element_ty with
-              | Array -> 
-                  let str_ptr = build_gep2 element_ty arg [| llvm.c64 0; llvm.c64 0 |] "arrptr" llvm.builder in (* ??? build_gep and opaque_ptr should be handled on the receiver (so a build_load is needed????) *)
-                  let opaque_ptr = build_bitcast str_ptr (pointer_type2 llvm.context) "ptr" llvm.builder in
-                  opaque_ptr
-              | _ -> build_load2 element_ty arg "farg" llvm.builder (* pointer is a variable or an array element*)
-            end
-        | Integer -> arg
-        | _ -> raise (Failure "aa")
-          
-          (* let var_ptr = build_gep2 ty arg [| llvm.c32 0; llvm.c32 0 |] ("farg"^"ptr") llvm.builder in
-          let opaque_ptr = build_bitcast var_ptr (pointer_type2 llvm.context) "ptr" llvm.builder in
-          opaque_ptr *)
+            let ty = extract_ST_llt ll_env_arg in
+            (match classify_ptr ll_env_arg with
+            | Array ->
+                let str_ptr = build_gep ty llv [| llvm.c64 0; llvm.c64 0 |] "arrptr" llvm.bd in (* ??? build_gep and opaque_ptr should be handled on the receiver (so a build_load is needed????) *)
+                str_ptr
+            | Integer -> build_load ty llv "farg" llvm.bd (* when this is matched pointer is a variable or an array element*)
+            | _ -> assert false) (* structs need to be handled *)
+        | Integer -> llv
+        | _ -> assert false
       in
-      let fixed_args = List.map fix_arg ll_args in
+      let fixed_args = List.map fix_arg args in
+
       let ll_args = 
         if upper = 1 then 
           let stackframe = FunctionsToFrames.find name func.stack_frames(*createStackFrame llvm env name*) in
@@ -221,17 +118,21 @@ let rec create_fcall llvm func env stmt =
           Array.of_list fixed_args in
 
 
-      begin
-        match classify_type actual_frt with
-        | Void -> build_call2 frt f ll_args "" llvm.builder
-        | Integer ->
-            if integer_bitwidth actual_frt == 32 then
-              let ret = build_call2 frt f ll_args (name^"call") llvm.builder in
-              build_sext ret llvm.i64 (name^"ret") llvm.builder
-            else
-              build_call2 frt f ll_args (name^"ret") llvm.builder
-        | _ -> assert false
-      end
+      let fty = 
+        match lookupST name env with
+        | FuncEntry ty -> ty
+        | _ -> assert false in
+      let frt = return_type fty in
+      (match classify_type frt with
+      | Void -> build_call fty f ll_args "" llvm.bd
+      | Integer ->
+          if integer_bitwidth frt == 32 then
+            let ret = build_call fty f ll_args (name^"call") llvm.bd in
+            build_sext ret llvm.i64 (name^"ret") llvm.bd
+          else
+            build_call fty f ll_args (name^"ret") llvm.bd
+      | _ -> assert false)
+      
   | _ -> assert false
 
 and handle_matrix llvm func env lvalue acc =
@@ -239,36 +140,41 @@ and handle_matrix llvm func env lvalue acc =
   | L_id var as lvalue         -> (*(codegen_expr llvm env (L_id var))::acc*)
       (* let x = (codegen_expr llvm env (L_id var)) in *)
       (match codegen_expr llvm func env lvalue with
-      | CompositeEntry (llv, dims) -> (llv, dims), acc
+      | CompositeEntry (llv, dims, _) -> (llv, dims), acc
       | _              -> assert false)
 
   | L_string_lit s as lvalue   -> (*(codegen_expr llvm env (L_string_lit s))::acc*)
       (match codegen_expr llvm func env lvalue with
-      | CompositeEntry (llv, dims) -> (llv, dims), acc
+      | CompositeEntry (llv, dims, _) -> (llv, dims), acc
       | _              -> assert false)
   | L_matrix (e1, e2) ->
       (* let x = codegen_expr llvm env e2 in
       handle_matrix llvm env e1 (x::acc) *)
       (match codegen_expr llvm func env e2 with
-      | BasicEntry llv -> handle_matrix llvm func env e1 (llv::acc)
+      | BasicEntry (llv, _) -> handle_matrix llvm func env e1 (llv::acc)
       | _ -> assert false)
   | _ -> assert false
 
 
 and codegen_expr llvm func env expr =
   match expr with
-  | E_int_const i  -> (BasicEntry (llvm.c64 i))
-  | E_char_const c -> (BasicEntry (llvm.c8 (Char.code c)))
+  | E_int_const i  -> (BasicEntry (llvm.c64 i, llvm.i64))
+  | E_char_const c -> (BasicEntry (llvm.c8 (Char.code c), llvm.i64))
   | L_string_lit s -> 
-      let str = const_stringz llvm.context s in
+      let str = const_stringz llvm.ctx s in
       let str_ty = type_of str in
       (* elegxos ypoloipwn syanrthsewn*)
 
-      let str_ptr = build_alloca str_ty "strtmp" llvm.builder in
-      let _ = build_store str str_ptr llvm.builder in
-      (* let str_ptr = build_gep2 str_ty str_array [| llvm.c32 0; llvm.c32 0 |] "str_ptr" llvm.builder in (* ??? build_gep and opaque_ptr should be handled on the receiver (so a build_load is needed????) *)
-      let opaque_ptr = build_bitcast str_ptr (pointer_type2 llvm.context) "ptr" llvm.builder in *)
-      CompositeEntry (str_ptr, [1 + String.length s])
+      let str_ptr = build_alloca str_ty "strtmp" llvm.bd in
+      let _ = build_store str str_ptr llvm.bd in
+      (* let str_ptr = build_gep2 str_ty str_array [| llvm.c32 0; llvm.c32 0 |] "str_ptr" llvm.bd in (* ??? build_gep and opaque_ptr should be handled on the receiver (so a build_load is needed????) *)
+      let opaque_ptr = build_bitcast str_ptr (pointer_type2 llvm.ctx) "ptr" llvm.bd in *)
+
+      print_string "reached here\n";
+      (* print_string (string_of_llvalue str); *)
+      (* print_string (string_of_llvalue str_ptr); *)
+      print_string (string_of_lltype (type_of str_ptr));
+      CompositeEntry (str_ptr, [1 + String.length s], str_ty)
   | L_id var ->
       lookupST var env (* can be Basic, composite or stackframe entry *)
       (* begin
@@ -276,11 +182,12 @@ and codegen_expr llvm func env expr =
         | i32 when i32 == llvm.i32 -> var_addr, None  (* ean einai function param BY REFERENCE ayto prepei na allajei*)
         | i8 when i8 == llvm.i8    -> var_addr, None 
         | _ ->
-          let var_ptr = build_gep2 var_ty var_addr [| llvm.c32 0; llvm.c32 0 |] (var^"ptr") llvm.builder in
-          let opaque_ptr = build_bitcast var_ptr (pointer_type2 llvm.context) "ptr" llvm.builder in
+          let var_ptr = build_gep2 var_ty var_addr [| llvm.c32 0; llvm.c32 0 |] (var^"ptr") llvm.bd in
+          let opaque_ptr = build_bitcast var_ptr (pointer_type2 llvm.ctx) "ptr" llvm.bd in
           opaque_ptr, dims
       end *)
   | L_matrix (e1, e2) as e ->
+      (* print_string "reached"; *)
       (* let array_types, dims = List.split (handle_matrix llvm env e []) in *)
       let (array_ptr, dims), indexes = handle_matrix llvm func env e [] in
       (* let dims = Option.get (List.hd dims) in *)
@@ -293,36 +200,36 @@ and codegen_expr llvm func env expr =
 
             let indexes = List.map (fun x ->
               match classify_type (type_of x) with
-              | Pointer -> build_load2 (element_type (type_of x)) x "index_load" llvm.builder
+              | Pointer -> build_load2 (element_type (type_of x)) x "index_load" llvm.bd
               | _       -> x
             ) indexes in
 
-            let llindex = compute_linear_index2 llvm dims indexes in
+            let llindex = compute_linear_index llvm dims indexes in
 
           
             (* element_ptr points to the index of the matrix we want *)
-            (* let element_ptr = build_gep2 array_ty array_ptr [| llvm.c32 0; llvm.c32 linear_index |] "matrixptr" llvm.builder in *)
+            (* let element_ptr = build_gep2 array_ty array_ptr [| llvm.c32 0; llvm.c32 linear_index |] "matrixptr" llvm.bd in *)
             (* element_type of array_ty is the type of an array. if [50xi64] then i64 *)
-            let element_ptr = build_gep2 array_ty array_ptr [| llvm.c64 0; llindex |] "matrixptr" llvm.builder in
+            let element_ptr = build_gep2 array_ty array_ptr [| llvm.c64 0; llindex |] "matrixptr" llvm.bd in
 
-            (BasicEntry element_ptr)
+            (BasicEntry (element_ptr, array_ty)) (* !!! array_ty is wrong here I think *)
         (* | [] -> assert false *)
       end
   | E_fcall stmt -> 
       (match stmt with
       | S_fcall (name, ps) -> 
           let retv = create_fcall llvm func env (S_fcall (name, ps)) in
-          (BasicEntry retv)
+          (BasicEntry (retv, type_of retv))
       | _ -> assert false)
   | E_op1 (op, e) -> 
       let rhs = codegen_expr llvm func env e in
 
       let get_value llv =
         match llv with
-        | BasicEntry x ->
+        | BasicEntry (x, ty) -> (* need to check this (the ty)!!!*)
             let ty = type_of x in
             (match classify_type ty with
-            | Pointer -> build_load2 (element_type ty) x "condtmp" llvm.builder (* pointer is a variable or an array element*)
+            | Pointer -> build_load2 (element_type ty) x "condtmp" llvm.bd (* pointer is a variable or an array element*)
             | Integer -> x
             | _ -> assert false)
         | _ -> assert false
@@ -331,19 +238,19 @@ and codegen_expr llvm func env expr =
 
       begin
         match op with
-        | Op_plus  -> (BasicEntry rhs_value)
-        | Op_minus -> (BasicEntry (build_neg rhs_value "negtmp" llvm.builder))
+        | Op_plus  -> (BasicEntry (rhs_value, type_of rhs_value))    (*!!!! this and the below need checking *)
+        | Op_minus -> (BasicEntry ((build_neg rhs_value "negtmp" llvm.bd), llvm.i64))
         | _        -> assert false
       end
-  | E_op2 (e1, op, e2) ->
+  | E_op2 (e1, op, e2) -> (* needs checking like the above *)
       let lhs, rhs = codegen_expr llvm func env e1, codegen_expr llvm func env e2 in
 
       let get_value llv =
         match llv with
-        | BasicEntry x ->
+        | BasicEntry (x, ty) ->
             let ty = type_of x in
             (match classify_type ty with
-            | Pointer -> build_load2 (element_type ty) x "condtmp" llvm.builder (* pointer is a variable or an array element*)
+            | Pointer -> build_load2 (element_type ty) x "condtmp" llvm.bd (* pointer is a variable or an array element*)
             | Integer -> x
             | _ -> assert false)
         | _ -> assert false
@@ -351,11 +258,11 @@ and codegen_expr llvm func env expr =
       let lhs_value, rhs_value = get_value lhs, get_value rhs in
 
       match op with
-      | Op_plus  -> (BasicEntry (build_add lhs_value rhs_value "addtmp" llvm.builder))
-      | Op_minus -> (BasicEntry (build_sub lhs_value rhs_value "subtmp" llvm.builder))
-      | Op_times -> (BasicEntry (build_mul lhs_value rhs_value "multmp" llvm.builder))
-      | Op_div   -> (BasicEntry (build_sdiv lhs_value rhs_value "divtmp" llvm.builder))
-      | Op_mod   -> (BasicEntry (build_srem lhs_value rhs_value "modtmp" llvm.builder))
+      | Op_plus  -> (BasicEntry ((build_add lhs_value rhs_value "addtmp" llvm.bd), llvm.i64))
+      | Op_minus -> (BasicEntry ((build_sub lhs_value rhs_value "subtmp" llvm.bd), llvm.i64))
+      | Op_times -> (BasicEntry ((build_mul lhs_value rhs_value "multmp" llvm.bd), llvm.i64))
+      | Op_div   -> (BasicEntry ((build_sdiv lhs_value rhs_value "divtmp" llvm.bd), llvm.i64))
+      | Op_mod   -> (BasicEntry ((build_srem lhs_value rhs_value "modtmp" llvm.bd), llvm.i64))
       | _        -> assert false
 
 and codegen_cond llvm func env cond =
@@ -365,7 +272,7 @@ and codegen_cond llvm func env cond =
       let rhs = codegen_cond llvm func env c in
       begin
         match op with
-        | Op_not -> build_xor rhs (llvm.c1 1) "negtmp" llvm.builder
+        | Op_not -> build_xor rhs (llvm.c1 1) "negtmp" llvm.bd
         | _      -> assert false
       end
   | C_bool2 (c1, op, c2) ->
@@ -373,8 +280,8 @@ and codegen_cond llvm func env cond =
       let rhs = codegen_cond llvm func env c2 in
       begin
         match op with
-        | Op_and -> build_and lhs rhs "andtmp" llvm.builder
-        | Op_or  -> build_or lhs rhs "ortmp" llvm.builder
+        | Op_and -> build_and lhs rhs "andtmp" llvm.bd
+        | Op_or  -> build_or lhs rhs "ortmp" llvm.bd
         | _      -> assert false
       end
   | C_expr (e1, op, e2) -> 
@@ -383,11 +290,11 @@ and codegen_cond llvm func env cond =
       
       let get_value llv = 
         match llv with
-        | BasicEntry x ->
+        | BasicEntry (x, _) ->  (* needs checking!!! *)
             let ty = type_of x in
             (* let element_ty = element_type (type_of llv) in *)
             (match classify_type ty with
-            | Pointer -> build_load2 (element_type ty) x "condtmp" llvm.builder (* pointer is a variable or an array element*)
+            | Pointer -> build_load2 (element_type ty) x "condtmp" llvm.bd (* pointer is a variable or an array element*)
             | Integer -> x
             | _ -> assert false)
         | _ -> assert false
@@ -396,12 +303,12 @@ and codegen_cond llvm func env cond =
       let rhs = get_value rhs in
       
       match op with
-      | Op_eq          -> build_icmp Icmp.Eq lhs rhs "eqtmp" llvm.builder
-      | Op_hash        -> build_icmp Icmp.Ne lhs rhs "netmp" llvm.builder
-      | Op_less        -> build_icmp Icmp.Slt lhs rhs "sltmp" llvm.builder
-      | Op_lesseq      -> build_icmp Icmp.Sle lhs rhs "slemp" llvm.builder
-      | Op_greater     -> build_icmp Icmp.Sgt lhs rhs "sgtmp" llvm.builder
-      | Op_greatereq   -> build_icmp Icmp.Sge lhs rhs "sgemp" llvm.builder
+      | Op_eq          -> build_icmp Icmp.Eq lhs rhs "eqtmp" llvm.bd
+      | Op_hash        -> build_icmp Icmp.Ne lhs rhs "netmp" llvm.bd
+      | Op_less        -> build_icmp Icmp.Slt lhs rhs "sltmp" llvm.bd
+      | Op_lesseq      -> build_icmp Icmp.Sle lhs rhs "slemp" llvm.bd
+      | Op_greater     -> build_icmp Icmp.Sgt lhs rhs "sgtmp" llvm.bd
+      | Op_greatereq   -> build_icmp Icmp.Sge lhs rhs "sgemp" llvm.bd
       | _              -> assert false
 
 and codegen_stmt llvm func env stmt = (* isos den xreiazetai to env *)
@@ -409,98 +316,94 @@ and codegen_stmt llvm func env stmt = (* isos den xreiazetai to env *)
   | S_fcall (name, exprs) as fcall -> let _ = create_fcall llvm func env fcall in ()
   | S_colon _ -> ()
   | S_assign (e1, e2) ->
-      (* let l = 
-        match codegen_expr llvm env e1 with
-        | BasicEntry x -> x
-        | StackFrameEntry (src, stack, pos) -> stack
-        | _            -> assert false
-      in *)
       let r = (* ayto prepei na fygei kai na ginei opws to l *)
         match codegen_expr llvm func env e2 with
-        | BasicEntry x -> x
+        | BasicEntry (x, _) -> x (* needs checking!!1 *)
         | _            -> assert false
       in
       let dest =
         let l_entry = codegen_expr llvm func env e1 in
-        let l = extract_entry l_entry in
-
-        let l_ty = element_type (type_of l) in
+        let l = extract_ST_llv l_entry in
+      
+        (* HERE a way must be found to handle structs *)
+        (*let l_ty = element_type (type_of l) in      
         match classify_type l_ty with
         | Struct -> 
             let (original_llv, struct_pos) = extract_struct_info l_entry in
             let first_arg = (params func.the_f).(0) in
-            let frame_element_ptr = build_struct_gep2 l_ty first_arg struct_pos "frame_var" llvm.builder in (* to miden prepei na fygei kai na mpei to struct pos*)
-            build_load2 (element_type (type_of frame_element_ptr)) frame_element_ptr "lvload" llvm.builder
-        | _      -> l in
+            let frame_element_ptr = build_struct_gep2 l_ty first_arg struct_pos "frame_var" llvm.bd in (* to miden prepei na fygei kai na mpei to struct pos*)
+            build_load2 (element_type (type_of frame_element_ptr)) frame_element_ptr "lvload" llvm.bd
+        | _      ->*) l in
       (* print_string ("AAA"^(string_of_lltype (element_type (type_of l)))^"AAA"); *)
       let src =
-        match classify_type (type_of r) with
-        | Pointer -> build_load2 (element_type (type_of r)) r "rvload" llvm.builder
-        | _       -> r
-      in ignore (build_store src dest llvm.builder)
+         print_string ((string_of_llvalue r)^"\n");
+        (*match classify_type (type_of r) with
+        | Pointer -> build_load2 (element_type (type_of r)) r "rvload" llvm.bd
+        | _       -> r *)
+      in () (*ignore (build_store src dest llvm.bd)*)
   | S_block stmts -> List.iter (codegen_stmt llvm func env) stmts
   | S_if (c, s) ->
       let cond = codegen_cond llvm func env c in
-      let start_bb = insertion_block llvm.builder in
+      let start_bb = insertion_block llvm.bd in
       let cur_function = block_parent start_bb in
 
-      let then_bb = append_block llvm.context "then" cur_function in
-      let after_bb = append_block llvm.context "after" cur_function in
-      let _ = build_cond_br cond then_bb after_bb llvm.builder in
+      let then_bb = append_block llvm.ctx "then" cur_function in
+      let after_bb = append_block llvm.ctx "after" cur_function in
+      let _ = build_cond_br cond then_bb after_bb llvm.bd in
 
-      position_at_end then_bb llvm.builder;
+      position_at_end then_bb llvm.bd;
       codegen_stmt llvm func env s;
-      let _ = build_br after_bb llvm.builder in
+      let _ = build_br after_bb llvm.bd in
 
-      position_at_end after_bb llvm.builder
+      position_at_end after_bb llvm.bd
   | S_ifelse (c, s1, s2) ->
       let cond = codegen_cond llvm func env c in
-      let start_bb = insertion_block llvm.builder in
+      let start_bb = insertion_block llvm.bd in
       let cur_function = block_parent start_bb in
 
-      let then_bb = append_block llvm.context "then" cur_function in
-      let else_bb = append_block llvm.context "else" cur_function in
-      let merge_bb = append_block llvm.context "ifafter" cur_function in
-      let _ = build_cond_br cond then_bb else_bb llvm.builder in
+      let then_bb = append_block llvm.ctx "then" cur_function in
+      let else_bb = append_block llvm.ctx "else" cur_function in
+      let merge_bb = append_block llvm.ctx "ifafter" cur_function in
+      let _ = build_cond_br cond then_bb else_bb llvm.bd in
 
-      position_at_end then_bb llvm.builder;
+      position_at_end then_bb llvm.bd;
       codegen_stmt llvm func env s1;
-      let _ = build_br merge_bb llvm.builder in 
+      let _ = build_br merge_bb llvm.bd in 
       
-      position_at_end else_bb llvm.builder;
+      position_at_end else_bb llvm.bd;
       codegen_stmt llvm func env s2;
-      let _ = build_br merge_bb llvm.builder in
+      let _ = build_br merge_bb llvm.bd in
 
-      position_at_end merge_bb llvm.builder;
+      position_at_end merge_bb llvm.bd;
   | S_while (c, s) ->
-      let start_bb = insertion_block llvm.builder in
+      let start_bb = insertion_block llvm.bd in
       let cur_function = block_parent start_bb in
     
-      let cond_bb = append_block llvm.context "cond" cur_function in
-      let loop_bb = append_block llvm.context "loop" cur_function in
-      let after_bb = append_block llvm.context "afterloop" cur_function in
-      let _ = build_br cond_bb llvm.builder in
+      let cond_bb = append_block llvm.ctx "cond" cur_function in
+      let loop_bb = append_block llvm.ctx "loop" cur_function in
+      let after_bb = append_block llvm.ctx "afterloop" cur_function in
+      let _ = build_br cond_bb llvm.bd in
 
-      position_at_end cond_bb llvm.builder;
+      position_at_end cond_bb llvm.bd;
       let cond = codegen_cond llvm func env c in
-      let _ = build_cond_br cond loop_bb after_bb llvm.builder in
+      let _ = build_cond_br cond loop_bb after_bb llvm.bd in
 
-      position_at_end loop_bb llvm.builder;
+      position_at_end loop_bb llvm.bd;
       codegen_stmt llvm func env s;
-      let _ = build_br cond_bb llvm.builder in
+      let _ = build_br cond_bb llvm.bd in
 
-      position_at_end after_bb llvm.builder;
+      position_at_end after_bb llvm.bd;
 
   | S_return e ->
       match e with
       | Some expr ->
           let n = 
             match codegen_expr llvm func env expr with
-            | BasicEntry x -> x
+            | BasicEntry (x, _) -> x
             | _            -> assert false
           in
-          ignore (build_ret n llvm.builder)
-      | None -> ignore (build_ret_void llvm.builder)
+          ignore (build_ret n llvm.bd)
+      | None -> ignore (build_ret_void llvm.bd)
 
 
 
@@ -513,10 +416,12 @@ let params_to_names_and_lltypes llvm fparams =
     match params with
     | F_params (r, vars, t) -> 
         (match r with
-        | Some _  -> vars::acc, List.map (fun _ -> pointer_type2 llvm.context) vars
+        | Some _  -> 
+            let ty, _ = type_to_lltype llvm t in
+            vars::acc, List.map (fun _ -> llvm.ptr, Some ty) vars
         | None -> 
             let ty, _ = type_to_lltype llvm t in 
-            vars::acc, List.map (fun _ -> ty) vars)
+            vars::acc, List.map (fun _ -> ty, None) vars)
     | _ -> assert false in
 
   (* the logic behind this is that we accumulate all variable names and map each variable to its type *)
@@ -527,27 +432,28 @@ let params_to_names_and_lltypes llvm fparams =
 let codegen_fhead llvm sframe head = (* ayto kalo einai na ginei merge me to codegen_decl *)
   match head with
   | F_head (name, params, t) ->
-      let ftype, _ = type_to_lltype llvm t in
+      let frt, _ = type_to_lltype llvm t in
       let var_names, fparams =
         match params with
         | Some ps -> params_to_names_and_lltypes llvm ps (* fparams_to_llarray returns list, not array :) *)
         | None    -> [], [] in
       (* List.iter print_string var_names; *)
+      let lltypes, pointer_types = List.split fparams in
       begin
         match sframe with
-        | Some s -> (name, var_names, function_type ftype (Array.of_list (type_of s::fparams)))
-        | None   -> (name, var_names, function_type ftype (Array.of_list fparams))
+        | Some _ -> (name, var_names, pointer_types, function_type frt (Array.of_list (llvm.ptr::lltypes)))
+        | None   -> (name, var_names, pointer_types, function_type frt (Array.of_list lltypes))
       end
   | _ -> assert false
 
 let rec addVars llvm env vars (t, dims) = (* edw prepei na ginei handle to duplicate vars h isws sto semantic*)
   match vars with (* ayth h synarthsh mporei na fygei mallon teleiws kai na ginei me foldl*)
   | hd::tl -> 
-      let alloca_addr = build_alloca t hd llvm.builder in (* edw o builder einai hdh sthn arxh ths synarthshs wste na paijei to mem2reg *)
+      let alloca_addr = build_alloca t hd llvm.bd in (* edw o builder einai hdh sthn arxh ths synarthshs wste na paijei to mem2reg *)
       let newST = 
         match dims with
-        | None   -> insertST env hd (BasicEntry alloca_addr)
-        | Some l -> insertST env hd (CompositeEntry (alloca_addr, l))
+        | None   -> insertST env hd (BasicEntry (alloca_addr, t))
+        | Some l -> insertST env hd (CompositeEntry (alloca_addr, l, t))
       in addVars llvm newST tl (t, dims)
   | [] -> env
 
@@ -558,11 +464,11 @@ let rec codegen_decl llvm sframe env decl =
   match decl with
   | F_def (h, locals, block) ->
 
-      let (name, var_names, ft) = 
+      let (name, var_names, pointer_types, ft) = 
         if !first_function = true then (
-          let (_, param_names, ft) = codegen_fhead llvm sframe h in
+          let (_, param_names, pointer_types, ft) = codegen_fhead llvm sframe h in
           first_function := false;
-          ("main", param_names, ft))
+          ("main", param_names, pointer_types, ft))
         else
           codegen_fhead llvm sframe h
       in
@@ -570,8 +476,8 @@ let rec codegen_decl llvm sframe env decl =
       
 
       let f = 
-        match lookup_function name llvm.the_module with (* search for function "name" in the context *)
-        | None -> declare_function name ft llvm.the_module (*here what happens when a function is redefined locally?*)
+        match lookup_function name llvm.md with (* search for function "name" in the ctx *)
+        | None -> declare_function name ft llvm.md (*here what happens when a function is redefined locally?*)
         | Some f ->
             if Array.length (basic_blocks f) = 0 then () else
               raise (Failure "redefinition of function");
@@ -585,10 +491,10 @@ let rec codegen_decl llvm sframe env decl =
 
       let env = 
         if List.length var_names <> 0 then 
-          List.fold_left2 (fun e name param ->
+          List.fold_left2 (fun e (name, pty) param ->
             set_value_name name param;
-            insertST e name (FuncParamEntry param)
-          ) env var_names (params f |> Array.to_list |> List.tl) 
+            insertST e name (FuncParamEntry (param, pty))
+          ) env (List.combine var_names pointer_types) (params f |> Array.to_list |> List.tl) 
         else
           env in
 
@@ -599,83 +505,31 @@ let rec codegen_decl llvm sframe env decl =
 
       (* if name <> "main" then set_value_name (Option.get sname) (params f).(0); *)
       (* set names for arguments *)
-      let bb = append_block llvm.context (name ^ "_entry") f in
-      position_at_end bb llvm.builder;
+      let bb = append_block llvm.ctx (name ^ "_entry") f in
+      position_at_end bb llvm.bd;
 
       let func_info = {
         the_f = f;
         stack_frames = FunctionsToFrames.empty;
       } in
 
-      (*
-      let x = named_struct_type llvm.context ("frame."^name) in (*na xrhsimopoihthei struct type*)
-      (* print_string ((string_of_lltype x)^"\n"); *)
-      let keys, values = List.split (SymbolTable.bindings env) in
-      let values, _ = List.split values in
-      struct_set_body x (Array.of_list (List.map type_of values)) false;
-      (* struct_set_body x [| pointer_type llvm.i8; type_of (llvm.c32 2)|] false; *)
-      (* print_string ((string_of_lltype x)^"\n"); *)
-      let frame_ptr = build_alloca x "frame_ptr" llvm.builder in
-      (* print_string (string_of_llvalue ( frame_ptr)^"\n"); *)
-      if Array.length (struct_element_types x) <> 0 then
-        let base_and_store struct_ty index element =
-          let base = (build_struct_gep2 struct_ty frame_ptr index "frame0" llvm.builder) in
-          ignore (build_store element base llvm.builder); 
-          index+1 
-        in ignore (List.fold_left (base_and_store x) 0 values);
-      else ();
-      *)
-
-
-      (* create a place in memory to store return value *)
-      (* let retv_addr = build_alloca llvm.i32 "retvptr" llvm.builder in
-      let env = insertST env "retvptr_grace" (retv_addr, None) in *)
-
       (*handle locals and block*)
       let func_info, local_env = List.fold_left (codegen_localdef llvm bb) (func_info, env) locals in
       (* edw thelei skepsi gia to pws tha mpoun oi times twn local-defs: den thelw tis times pou eisagei to definition mias fucntion*)
       
-      position_at_end bb llvm.builder;
+      position_at_end bb llvm.bd;
       (* body *)
       codegen_stmt llvm func_info local_env block;
-      
-      (* ayto einai ligo bakalistiko, prepei na to stressarw na dw oti panta doulevei,
-         o skopos einai na vazei ret void stis void synarthseis pou den exoun to 
-         statement return sto telos*)
-      (* let _ = 
-        match block with
-        | S_block (stmts) ->
-            let x = List.hd (List.rev stmts) in
-            (match x with
-            | S_return _ -> ()
-            | _ -> ignore (build_ret_void llvm.builder);)
-        | _ -> assert false
-        in *)
-        (* (build_ret_void llvm.builder); *)
-
-        (* let basic_blocks = basic_blocks f in
-        let last_instruction = block_terminator entry_block in *)
 
 
         let helper x =
           match block_terminator x with
           | Some _ -> ()
-          | None   -> ignore (build_ret_void llvm.builder) in
-        iter_blocks helper ( f);
-(*       
-        ignore (match last_instruction with
-        | Some _ -> () (* A terminator exists, no need to add a return. *)
-        | None -> ignore (build_ret_void llvm.builder)); *)
-          (* No terminator, so we add a default return based on `ret_type`. *)
-          (* let default_return_value = match classify_type ret_type with
-            | TypeKind.Void -> const_null ret_type
-            | TypeKind.Integer -> const_int ret_type 0
-            | _ -> failwith "Unhandled return type"
-          in
-          ignore (build_ret default_return_value builder) *)
+          | None   -> ignore (build_ret_void llvm.bd) in  (* mia int synarthsh prepei na kanei return kati akoma kai an den yparxei to return mesa se ayth? den jerw an entopizetai (apo ton semantic analyzer) mia int synarthsh pou den exei kapoio return *)
+        iter_blocks helper f;
 
       
-      Llvm_analysis.assert_valid_function f;
+      (* Llvm_analysis.assert_valid_function f; *)
       (* env *)
 
 
@@ -685,7 +539,7 @@ let rec codegen_decl llvm sframe env decl =
 
 
 
-      (* insertST env name (f, None) ayto mallon den prepei na mpei *)
+      (* insertST env name (FuncEntry ft) *)
       env
 
 
@@ -698,16 +552,19 @@ and codegen_localdef llvm entryBB (func, env) local = (*entryBB is the function'
         match h with
         | F_head (name, _, _) -> name
         | _ -> assert false in
+      
       let frame_ptr, newST = createStructType llvm env name in
+      let _, _,_, ft = codegen_fhead llvm (Some frame_ptr) h in
       let _ = codegen_decl llvm (Some frame_ptr) newST fdef in 
 
+      let env = insertST env name (FuncEntry ft) in  (* frame_ptr is dummy here, just to fill a gap: it needs to be replaced by the function f*)
       ({func with stack_frames = FunctionsToFrames.add name frame_ptr func.stack_frames}, env)
 
   | F_decl h -> (* this should be used for function definitions as well*)
-      let (name, var_names, ft) = codegen_fhead llvm None  h in
+      let (name, var_names, pointer_types, ft) = codegen_fhead llvm None  h in
       let f = 
-        match lookup_function name llvm.the_module with 
-        | None -> declare_function name ft llvm.the_module (* !!! here what happens when a function is redefined locally?*)
+        match lookup_function name llvm.md with 
+        | None -> declare_function name ft llvm.md (* !!! here what happens when a function is redefined locally?*)
         | Some f ->
             if Array.length (basic_blocks f) = 0 then () else
               raise (Failure "redefinition of function");
@@ -718,7 +575,7 @@ and codegen_localdef llvm entryBB (func, env) local = (*entryBB is the function'
       (* insertST env name (f, None) *)
       (func, env)
   | V_def (vars, t) -> 
-      position_at_end entryBB llvm.builder;
+      position_at_end entryBB llvm.bd;
       let llty, dims = type_to_lltype llvm t in
       (* let dims = Option.get dims in *)
       (func, addVars llvm env vars (llty, dims))  (* isws anti na kalw thn addvars na mporei na ginei olo ayto me foldl*)
@@ -738,13 +595,14 @@ let llvm_compile_and_dump asts =
     Llvm_scalar_opts.add_gvn;
     Llvm_scalar_opts.add_cfg_simplification;
   ]; (*maybe add some more??? *)
-  (* Initialize types aliases *)
+  (* Initialize types *)
   let i1 = i1_type ctx in
   let i8 = i8_type ctx in
   let i32 = i32_type ctx in
   let i64 = i64_type ctx in
   let void = void_type ctx in
-  (* Initialize constant functions *)
+  let ptr = pointer_type ctx in
+  (* Initialize constant types *)
   let c1 = const_int i1 in
   let c8 = const_int i8 in
   let c32 = const_int i32 in
@@ -754,16 +612,16 @@ let llvm_compile_and_dump asts =
   (* Initialize library functions and add them to the Symbol Table *)
   let writeInteger_ty = function_type void [| i64 |] in
   let writeChar_ty = function_type void [| i8 |] in
-  let writeString_ty = function_type void [| pointer_type2 ctx |] in (*maybe pointer_type i8 should be used?*)
+  let writeString_ty = function_type void [| ptr |] in (*maybe pointer_type i8 should be used?*)
   let readInteger_ty = function_type i64 [| |] in
   let readChar_ty = function_type i8 [| |] in
-  let readString_ty = function_type void [| i64; pointer_type2 ctx |] in
+  let readString_ty = function_type void [| i64; ptr |] in
   let ascii_ty = function_type i32 [| i8 |] in
   let chr_ty = function_type i8 [| i64 |] in
-  let strlen_ty = function_type i32 [| pointer_type2 ctx |] in
-  let strcmp_ty = function_type i32 [| pointer_type2 ctx; pointer_type2 ctx |] in
-  let strcpy_ty = function_type void [| pointer_type2 ctx; pointer_type2 ctx |] in
-  let strcat_ty = function_type void [| pointer_type2 ctx; pointer_type2 ctx |] in
+  let strlen_ty = function_type i32 [| ptr |] in
+  let strcmp_ty = function_type i32 [| ptr; ptr |] in
+  let strcpy_ty = function_type void [| ptr; ptr |] in
+  let strcat_ty = function_type void [| ptr; ptr |] in
   
   let _ = declare_function "writeInteger" writeInteger_ty md in
   let _ = declare_function "writeChar" writeChar_ty md in
@@ -778,19 +636,31 @@ let llvm_compile_and_dump asts =
   let _ = declare_function "strcpy" strcpy_ty md in
   let _ = declare_function "strcat" strcat_ty md in
 
+  
 
   let predefined = ["writeInteger"; "writeChar"; "writeString"; 
                     "readInteger"; "readChar"; "readString"; 
                     "ascii"; "chr"; "strlen"; "strcmp"; 
                     "strcpy"; "strcat"] in
 
-  (* let predefined_env = addPredefined emptyST in *)
+  let predefined_types = [writeInteger_ty; writeChar_ty; writeString_ty; 
+                          readInteger_ty; readChar_ty; readString_ty; 
+                          ascii_ty; chr_ty; strlen_ty; strcmp_ty;
+                          strcpy_ty; strcat_ty] in
+
+  let env = 
+    List.fold_left2 (fun e name fty -> 
+      insertST e name (FuncEntry fty)
+    ) emptyST predefined predefined_types in
+  (* c1 1 is dummy here (and everywhere else in FuncEntry as well!) *)
+  
+    (* let predefined_env = addPredefined emptyST in *)
 
   (* gather all info in a record for later use *)
   let info = {
-    context          = ctx;
-    the_module       = md;
-    builder          = builder;
+    ctx              = ctx;
+    md               = md;
+    bd               = builder;
     i1               = i1;
     i8               = i8;
     i32              = i32;
@@ -800,16 +670,17 @@ let llvm_compile_and_dump asts =
     c32              = c32;
     c64              = c64;
     void             = void;
+    ptr              = ptr;
     predefined_fs    = predefined;
   } in
 
 
   (* Emit the program code and add return value to main function *)
-  ignore (codegen_decl info None emptyST asts);
+  ignore (codegen_decl info None env asts);
   (* ignore (build_ret (c32 0) builder); *)
 
   (* Verify the entire module*)
-  Llvm_analysis.assert_valid_module md;
+  (* Llvm_analysis.assert_valid_module md; *)
 
   (* Optimize *) (* this must be optional *)
   (* ignore (PassManager.run_module md fpm); *)
