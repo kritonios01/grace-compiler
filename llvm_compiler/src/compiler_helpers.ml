@@ -59,7 +59,7 @@ type func_info = {
 
 
 (* these are to extract fields from the ST *)
-let extract_ST_llv x = (* Some matches are pending!! *)
+let extract_llv x = (* Some matches are pending!! *)
   match x with
   | BasicEntry (llv, _)          -> llv
   | CompositeEntry (llv, _, _)   -> llv
@@ -67,7 +67,7 @@ let extract_ST_llv x = (* Some matches are pending!! *)
   | StackFrameEntry (_, struct_, _) -> struct_
   | _ -> assert false
 
-let extract_ST_llt ptr =
+let extract_llt ptr =
   match ptr with
   | BasicEntry (_, ty)        -> ty
   | CompositeEntry (_, _, ty) -> ty
@@ -80,13 +80,18 @@ let extract_ST_llt ptr =
 
 (* ST entries have a type because pointers in LLVM are opaque so we need to store and retrieve their type from a higher level structure *)
 let classify_ptr ptr =
-  extract_ST_llt ptr |> classify_type
+  extract_llt ptr |> classify_type
 
 
 
 let extract_struct_info x =
   match x with
   | StackFrameEntry (orig, _, pos) -> (orig, pos)  (* isos na min xreiazetai katholou to original, px sto S_assign *)
+  | _ -> assert false
+
+let extract_array_dims x =
+  match x with
+  | CompositeEntry (_, dims, _) -> dims
   | _ -> assert false
 
 
