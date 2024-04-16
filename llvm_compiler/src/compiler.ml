@@ -1,6 +1,6 @@
 open Llvm
 open Ast
-open Symbol
+open Symbol_tables
 open TypeKind
 open Compiler_helpers
 
@@ -57,10 +57,10 @@ let createStructType llvm env fname =
       let replace x =
         match x with
         | Some ll_entry ->
-            (match ll_entry with
+            (match ll_entry with (* this returns Some ... because this is what is expected from the update function *)
             | BasicEntry _ 
             | CompositeEntry (_, _, _) 
-            | FuncParamEntry (_, _)          -> Some (StackFrameEntry (ll_entry, frame_ptr, index))
+            | FuncParamEntry (_, _)          -> Some (StackFrameEntry (ll_entry, index))
             | _                         -> assert false)
         | None -> assert false in
 
@@ -71,6 +71,31 @@ let createStructType llvm env fname =
     frame_ptr, env
   else frame_ptr, env
 
+let create_struct_callee llvm env fname =
+  let frame = named_struct_type llvm.ctx ("frame."^fname) in
+  let keys, values = llvmSTvalues env in
+  let st_pairs = List.combine keys values in
+  struct_set_body frame (Array.of_list (List.map type_of values)) false;
+
+  if List.length st_pairs <> 0 then 
+    (* store each value in ST in the struct and update the ST so that these values point to their new place *)
+    let store_and_updateST (index, env) (k, v) =
+      let replace x =
+        match x with
+        | Some ll_entry ->
+            (match ll_entry with (* this returns Some ... because this is what is expected from the update function *)
+            | BasicEntry _ 
+            | CompositeEntry (_, _, _) 
+            | FuncParamEntry (_, _)          -> Some (StackFrameEntry (ll_entry, index))
+            | _                         -> assert false) (* StackFrameEntry needs to be handled *)
+        | None -> assert false in
+
+      let newST = SymbolTable.update k replace env in
+      (index+1, newST)
+    in 
+    let (_, env) = List.fold_left store_and_updateST (0, env) st_pairs in
+    frame, env
+  else frame, env
 
 
 let rec create_fcall llvm func env stmt =
@@ -458,6 +483,9 @@ let params_to_names_and_lltypes llvm fparams =
   |> fun (names, lltypes) -> 
       List.(rev names |> concat, lltypes |> concat)
 
+
+
+(* sframe is None only for the main function. In all other cases including when there are no local-vars etc, a stackframe is created *)
 let codegen_fhead llvm sframe head = (* ayto kalo einai na ginei merge me to codegen_decl *)
   match head with
   | F_head (name, params, t) ->
@@ -587,8 +615,8 @@ and codegen_localdef llvm entryBB (func, env) local = (*entryBB is the function'
         | F_head (name, _, _) -> name
         | _ -> assert false in
       
-      let frame_ptr, newST = createStructType llvm env name in
-      let _, _,_, ft = codegen_fhead llvm (Some frame_ptr) h in
+      let frame_ptr, newST = createStructType llvm env name in (* we need this ST so that the functions know where to find these variables*)
+      let _, _,_, ft = codegen_fhead llvm (Some frame_ptr) h in (* doesn't matter what frame_ptr is, a pointer parameter is added nonetheless *)
       let _ = codegen_decl llvm (Some frame_ptr) newST fdef in 
 
       let env = insertST env name (FuncEntry ft) in  (* frame_ptr is dummy here, just to fill a gap: it needs to be replaced by the function f*)

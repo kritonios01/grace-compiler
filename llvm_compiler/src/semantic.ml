@@ -1,5 +1,5 @@
 open Ast
-open Symbol
+open Symbol_tables
 
 exception TypeError of string
 

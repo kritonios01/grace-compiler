@@ -3,14 +3,14 @@
 	(modules ast))
 
 (library
-	(name symbol)
-	(modules symbol)
+	(name symbol_tables)
+	(modules symbol_tables)
 	(libraries ast llvm))
 
 (library
 	(name semantic)
 	(modules semantic)
-	(libraries ast symbol))
+	(libraries ast symbol_tables))
 
 
 (ocamllex lexer)
@@ -26,7 +26,7 @@
 	(libraries 
 			semantic 
 			ast 
-			symbol 
+			symbol_tables 
 			compiler)
 	(modules main parser lexer)
 	;(link_flags -cclib -L/usr/lib/llvm15/lib -cclib -lLLVM-15 -ccopt -I/usr/lib/llvm15/include -cclib -lstdc++)
@@ -42,14 +42,14 @@
 			llvm.all_backends
 			llvm.analysis
 			ast
-			symbol
+			symbol_tables
 			compiler_helpers)
 )
 
 (library
 		(name compiler_helpers)
 		(modules compiler_helpers)
-		(libraries symbol llvm)
+		(libraries symbol_tables llvm)
 )
 
 ; sto telos na kanw ena hide warnings

@@ -19,5 +19,5 @@ let main =
       exit 1
   | Semantic.TypeError s -> (* this is an error raised by the semantic analyzer *)
       Printf.eprintf "Type error: %s\n" s;
-  | Symbol.SymbolExc (sym, s) -> (* this is an error raised by the ST when it doesn't find a token *)
+  | Symbol_tables.SymbolExc (sym, s) -> (* this is an error raised by the ST when it doesn't find a token *)
       Printf.eprintf "%s: %s\n" s sym;

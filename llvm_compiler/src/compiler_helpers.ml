@@ -2,7 +2,7 @@
    that is needed for the compiler so that compiler.ml is not bloated *)
 
 open Llvm
-open Symbol
+open Symbol_tables
 
 (* this record type helps keep the llvm bureaucracy nice and tidy.
    an object of this type is passed in every AST function in compiler.ml *)
@@ -38,6 +38,9 @@ type func_info = {
 
 
 
+
+
+
 (* --- Helper functions and types for the compiler's ST ------------------------ *)
 
 (* we define types for pointers to compensate for LLVM 16's lack of pointer types *)
@@ -59,12 +62,12 @@ type func_info = {
 
 
 (* these are to extract fields from the ST *)
-let extract_llv x = (* Some matches are pending!! *)
+let rec extract_llv x = (* Some matches are pending!! *)
   match x with
   | BasicEntry (llv, _)          -> llv
   | CompositeEntry (llv, _, _)   -> llv
   | FuncParamEntry (llv, _)      -> llv
-  | StackFrameEntry (_, struct_, _) -> struct_
+  | StackFrameEntry (entry, _)   -> extract_llv entry
   | _ -> assert false
 
 let extract_llt ptr =
@@ -75,18 +78,16 @@ let extract_llt ptr =
       (match ty with
       | Some llt -> llt
       | None     -> assert false)
-  | StackFrameEntry (_, _, _) -> assert false
+  | StackFrameEntry (_, _) -> assert false
   | FuncEntry ty              -> ty
 
 (* ST entries have a type because pointers in LLVM are opaque so we need to store and retrieve their type from a higher level structure *)
 let classify_ptr ptr =
   extract_llt ptr |> classify_type
 
-
-
 let extract_struct_info x =
   match x with
-  | StackFrameEntry (orig, _, pos) -> (orig, pos)  (* isos na min xreiazetai katholou to original, px sto S_assign *)
+  | StackFrameEntry (orig, pos) -> (orig, pos)  (* isos na min xreiazetai katholou to original, px sto S_assign *)
   | _ -> assert false
 
 let extract_array_dims x =
@@ -129,3 +130,42 @@ let compute_linear_index llvm dims indices =
     | _ -> failwith "Mismatched dimensions and indices"
   in
   aux 0 dimensions indices *)
+
+
+
+
+  (* these helpers are for the compiler's symbol table. It stores llvalues *)
+let llvmSTvalues mapping =
+  let keys, values =
+    List.(filter (fun (name, entry) ->
+      match entry with
+      | FuncEntry _ -> false
+      | _ -> true
+    ) (SymbolTable.bindings mapping) 
+    |> split) in
+  let extract_llvalue x =
+    match x with
+    | BasicEntry (llv, _)         -> llv
+    | CompositeEntry (llv, _, _)  -> llv
+    | FuncParamEntry (llv, _)     -> llv
+    (* | StackFrameEntry (_, llv, _) -> llv  *)
+    | _            -> assert false in
+  let values = List.map extract_llvalue values in
+  keys, values
+
+let printllvmST mapping =
+  let open Llvm in
+  let keys, values = llvmSTvalues mapping in
+  List.map (fun x -> string_of_lltype (type_of x)) values
+  |> List.iter2 (Printf.printf "%s -> %s | ") keys ;
+  Printf.printf "\n"
+
+let print_llenv_entry x =
+  let open Llvm in
+  (match x with
+  | BasicEntry (llv, _)         -> "Basic Entry: "^(string_of_llvalue llv)^"\n"
+  | CompositeEntry (llv, _, _)  -> "Composite Entry: "^(string_of_llvalue llv)^"\n"
+  | FuncParamEntry (llv, _)     -> "FuncParam Entry: "^(string_of_llvalue llv)^"\n"
+  | StackFrameEntry (llv, _)   -> let x = extract_llv llv in "StackFrame Entry: "^(string_of_llvalue x)^"\n" 
+  | _ -> assert false)
+  |> print_string

@@ -17,7 +17,7 @@ type ll_env_entry =
   | BasicEntry of Llvm.llvalue * Llvm.lltype (* this is for int64, int8, poitners to all these and void (andalso array elements obsiously)*)
   | CompositeEntry of Llvm.llvalue * int list * Llvm.lltype (* this is for arrays *) (* maybe we don't need int list since we have lltype of the array *)
   | FuncParamEntry of Llvm.llvalue * Llvm.lltype option
-  | StackFrameEntry of ll_env_entry * Llvm.llvalue * int (* env_entry is for the original type, llvalue is for the struct and int is the place in the stack *)
+  | StackFrameEntry of ll_env_entry * int (* env_entry is for the original type, llvalue is for the struct and int is the place in the stack *)
   | FuncEntry of Llvm.lltype
 
 
@@ -71,7 +71,7 @@ let printST mapping =
   let mapList = SymbolTable.bindings mapping in
   List.map helper mapList
 
-let llvmSTvalues mapping =
+(* let llvmSTvalues mapping =
   let keys, values =
     List.(filter (fun (name, entry) ->
       match entry with
@@ -84,7 +84,7 @@ let llvmSTvalues mapping =
     | BasicEntry (llv, _)         -> llv
     | CompositeEntry (llv, _, _)  -> llv
     | FuncParamEntry (llv, _)     -> llv
-    | StackFrameEntry (_, llv, _) -> llv 
+    (* | StackFrameEntry (_, llv, _) -> llv  *)
     | _            -> assert false in
   let values = List.map extract_llvalue values in
   keys, values
@@ -102,6 +102,6 @@ let print_llenv_entry x =
   | BasicEntry (llv, _)         -> "Basic Entry: "^(string_of_llvalue llv)^"\n"
   | CompositeEntry (llv, _, _)  -> "Composite Entry: "^(string_of_llvalue llv)^"\n"
   | FuncParamEntry (llv, _)     -> "FuncParam Entry: "^(string_of_llvalue llv)^"\n"
-  | StackFrameEntry (_, llv, _) -> "StackFrame Entry: "^(string_of_llvalue llv)^"\n" 
+  | StackFrameEntry (llv, _)   -> let x = Compiler_helpers.extract_llv llv in "StackFrame Entry: "^(string_of_llvalue x)^"\n" 
   | _ -> assert false)
-  |> print_string
+  |> print_string *)
