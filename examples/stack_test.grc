@@ -1,0 +1,31 @@
+fun main() : nothing
+	var r : char[10];
+
+	fun test() : nothing
+	{
+		r[0] <- 'k';
+		r[1] <- 'r';
+		r[2] <- 'i';
+		r[3] <- '\n';
+		r[4] <- '\0';
+		writeString(r);
+$$
+		r[0] <- 1;
+		r[1] <- 2;
+		r[2] <- 3;
+		r[3] <- 4;
+	$$
+	}
+
+{
+	test();
+	$$writeInteger(r[0]);
+	writeInteger(r[1]);
+	writeInteger(r[2]);
+	writeInteger(r[3]);
+$$
+	$writeChar(r[1]);
+	writeString(r);
+
+
+}

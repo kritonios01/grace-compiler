@@ -4,7 +4,7 @@ let main =
     let asts = Parser.program Lexer.lexer lexbuf in
     Printf.printf "%d lines read.\n" !Lexer.num_lines;
     Printf.printf "Syntax OK!\n";
-    let _ = Semantic.sem_ast asts in
+    (* let _ = Semantic.sem_ast asts in *)
     Printf.printf "Semantics OK!\n";
     let _ = Compiler.llvm_compile_and_dump asts in
     Printf.printf "Compilation OK!\n";

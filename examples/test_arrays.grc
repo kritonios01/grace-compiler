@@ -1,0 +1,6 @@
+fun main() : nothing
+	var a : int[5][6][7];
+
+{
+	a[4][5][3] <- 5;
+}

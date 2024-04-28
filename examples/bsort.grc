@@ -18,9 +18,9 @@ fun main () : nothing
          changed <- 0;
          i <- 0;
          while i < n-1 do {
-            if x[i] > x[i+1] then {
-               swap(x[i], x[i+1]);
-               changed <- 1;
+						if x[i] > x[i+1] then {
+              swap(x[i], x[i+1]);
+              changed <- 1;
             }
             i <- i+1;
          }
@@ -31,20 +31,21 @@ fun main () : nothing
       var i : int;
    {
       writeString(msg);
+			
       i <- 0;
       while i < n do {
          if i > 0 then writeString(", ");
          writeInteger(x[i]);
          i <- i+1;
       }
-      writeString("\n");
+			writeString("\n");
    }
    
    var seed, i : int;
    var x       : int[16];
    
 { $ main
-   seed <- 65;
+   seed <- 54;
    i <- 0;
    while i < 16 do {
       seed <- (seed * 137 + 221 + i) mod 101;
@@ -52,6 +53,6 @@ fun main () : nothing
       i <- i+1;
    }
    writeArray("Initial array: ", 16, x);
-   bsort(16, x);
+	 bsort(16, x);
    writeArray("Sorted  array: ", 16, x);
 } $ main

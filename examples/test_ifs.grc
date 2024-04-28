@@ -1,0 +1,4 @@
+fun main () : nothing
+{
+	if (3<5) then return; else writeString("re\n");
+}

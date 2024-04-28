@@ -1,17 +1,19 @@
 fun hello () : nothing
 	var i : int;
 	var ar : int[6]; 
-$$
-	fun x (ref str : char[]; k : int) : nothing
+
+	fun x (j : int; ref str : char[]; k : int) : nothing
 	{
-		k <- 1;
+		i <- k;
 		writeInteger(k);
+		writeChar('\n');
+		writeInteger(i);
 		writeString(str);
 		writeChar('\n');
-	}$$
+	}
 
 {
-	$x("aabb\n",1);
+	x(42, "kriton\n", 1);
 	$writeString("aaab\n");
 	
 	i <- -i;

@@ -1,0 +1,33 @@
+fun main () : nothing
+  var a : int[5];
+  
+  fun max () : nothing
+    var cur : int;
+    var j : int;
+  {
+    j <- 0;
+    cur <- a[0];
+
+    while j < 5 do {
+      if a[j] > cur then {
+        cur <- a[j];
+      }
+      j <- j+1;
+    }
+
+    writeInteger(cur);
+  }
+  
+  var i : int;
+{
+  i <- 0;
+  while i < 5 do {
+    a[i] <- readInteger();
+    i <- i+1;
+  }
+
+  max();
+
+
+
+}

@@ -63,7 +63,7 @@ let rec sem_expr env expr =
                                               (* Printf.printf "%s\n" name;
                                               printST env; *)
                                               (match func with 
-                                              | FunEntry (t, params) -> if custom_checklist types params then t else raise (TypeError "Wrong parameters were given to function when called")
+                                              | FunEntry (t, params) -> if custom_checklist types params then t else raise (TypeError ("Wrong parameters were given to function "^name^" when called"))
                                               | _               -> raise (TypeError (name ^ " is a variable, not a function")))
                       | _                  -> raise (Failure "1 Reached unreachable :("))
   | E_op1 (op, e)        -> (match op with

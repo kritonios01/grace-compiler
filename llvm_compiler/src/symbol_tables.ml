@@ -13,12 +13,7 @@ type env_entry =
   (* | FunEntry of  *)
 
 
-type ll_env_entry =
-  | BasicEntry of Llvm.llvalue * Llvm.lltype (* this is for int64, int8, poitners to all these and void (andalso array elements obsiously)*)
-  | CompositeEntry of Llvm.llvalue * int list * Llvm.lltype (* this is for arrays *) (* maybe we don't need int list since we have lltype of the array *)
-  | FuncParamEntry of Llvm.llvalue * Llvm.lltype option
-  | StackFrameEntry of ll_env_entry * int (* env_entry is for the original type, llvalue is for the struct and int is the place in the stack *)
-  | FuncEntry of Llvm.lltype
+
 
 
 module SymbolTable = Map.Make(struct (* mporei episis na fygei teleiws ayto kai na meinei Map.Make(String)*)
@@ -51,6 +46,18 @@ let rec list_to_string l =
   | [] -> ""
   | [a] -> a
   | (h::t) -> h ^ ", " ^ (list_to_string t)
+
+
+
+let find_new_values map1 map2 =
+  let helper key _ acc =
+    let value = lookupST key map2 in
+    SymbolTable.add key value acc
+  in
+  SymbolTable.fold helper map1 emptyST
+
+
+
 
 (* helper for debugging *)
 let printST mapping =
@@ -105,3 +112,18 @@ let print_llenv_entry x =
   | StackFrameEntry (llv, _)   -> let x = Compiler_helpers.extract_llv llv in "StackFrame Entry: "^(string_of_llvalue x)^"\n" 
   | _ -> assert false)
   |> print_string *)
+
+
+
+type ll_env_entry =
+  (* this is for int64, int8, pointers to those and void (and also array elements obsiously) 
+     REMEMBER: all llvalues on these datatypes are pointers in LLVM except for 
+     some cases of basicEntry (integer exprs, expr operators and conditions, E_fcall etc) *)
+  | BasicEntry of Llvm.llvalue * Llvm.lltype 
+  | CompositeEntry of Llvm.llvalue * int list * Llvm.lltype (* this is for arrays *) 
+  (* llvalue is for the parameter itself
+     int list option is for arrays (which must be passed by ref)
+     lltype option is for pointer type if param is passed by ref *)
+  | FuncParamEntry of Llvm.llvalue * int list option * Llvm.lltype option 
+  | StackFrameEntry of ll_env_entry * int (* env_entry is for the original type, llvalue is for the struct and int is the place in the stack *)
+  | FuncEntry of Llvm.lltype * ll_env_entry SymbolTable.t  (* lltype is for function's type*)

@@ -1,0 +1,22 @@
+fun test () : nothing
+	var ar : int[5];
+
+	fun dummy () : int
+	{
+		return 43;
+	}
+
+
+{
+	ar[1] <- 65;
+
+	writeInteger(ar[1]);
+
+
+
+	writeInteger(dummy());
+	writeString("\n");
+	writeInteger(strlen("abc"));	
+
+
+}
