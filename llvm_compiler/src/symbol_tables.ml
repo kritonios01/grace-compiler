@@ -9,7 +9,7 @@ type env_entry =
   | IntEntry of int option
   | CharEntry of char option
   | ArrayEntry of Ast.typ * int list * string option(* * int list*) (* list1 is dimensions, list2 is values *)
-  | FunEntry of Ast.typ * Ast.typ list (* string -> ref or noref *)
+  | FunEntry of Ast.typ * Ast.typ list (* typ is function return type & typ list is for its parameters *)
   (* | FunEntry of  *)
 
 
