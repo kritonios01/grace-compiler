@@ -78,7 +78,7 @@ let rec create_fcall llvm func env stmt =
       let f = 
         match lookup_function name llvm.md with
         | Some f -> f
-        | None -> raise (Failure "unknown function referenced") in
+        | None -> raise (Failure( "unknown function referenced: "^name)) in
       let (fty, callee_env) =
         match lookupST name env with
         | FuncEntry (ty, env) -> (ty, env)
@@ -398,13 +398,21 @@ let rec codegen_decl llvm sframe env decl = (* old_env is the symboltable before
       (* this env we add to FuncEntry is the one that must be used in the scope of this function 
        * it the newST which maps names to their position in the stack frame  *)
       let env = insertST env name (FuncEntry (ft, env)) in
-
+      
+      let bb = append_block llvm.ctx (name ^ "_entry") f in
+      position_at_end bb llvm.bd;
 
       let env = 
         if List.length var_names <> 0 then 
           List.fold_left2 (fun e (name, (dim, pty)) param ->
             set_value_name name param;
-            insertST e name (FuncParamEntry (param, dim, pty))
+            match pty with
+            | Some _ -> insertST e name (FuncParamEntry (param, dim, pty))
+            | None   -> 
+                let param_ptr = build_alloca (type_of param) (name^"ptr") llvm.bd in
+                ignore (build_store param param_ptr llvm.bd);
+                insertST e name (FuncParamEntry (param_ptr, dim, Some (type_of param)))
+            (* insertST e name (FuncParamEntry (param, dim, pty)) *)
           ) env (List.combine var_names (List.combine dims pointer_types)) (params f |> Array.to_list |> List.tl) 
         else
           env in
@@ -416,8 +424,11 @@ let rec codegen_decl llvm sframe env decl = (* old_env is the symboltable before
 
       (* if name <> "main" then set_value_name (Option.get sname) (params f).(0); *)
       (* set names for arguments *)
-      let bb = append_block llvm.ctx (name ^ "_entry") f in
-      position_at_end bb llvm.bd;
+
+
+
+      (* let bb = append_block llvm.ctx (name ^ "_entry") f in
+      position_at_end bb llvm.bd; *)
 
       let func_info = {
         the_f = f;
@@ -480,33 +491,35 @@ and codegen_localdef llvm entryBB (func, env) local = (*entryBB is the function'
         | F_head (name, _, _) -> name
         | _ -> assert false in
       
-      let frame_ty, newST = create_struct_type llvm env name in (* we need this ST so that the functions know where to find these variables*)
-      let _, _, _, ft = codegen_fhead llvm true h in
+      (* let func_env =
+        match SymbolTable.find_opt name env with
+        | Some v ->
+            (match v with
+            | FuncEntry (_, e) -> e
+            | _ -> assert false)
+        | None  -> env in *)
       
 
-
+      let frame_ty, newST = create_struct_type llvm env name in (* we need this ST so that the functions know where to find these variables*)
+      let _, _, _, ft = codegen_fhead llvm true h in
       let _ = codegen_decl llvm (Some frame_ty) newST fdef in 
-
-
-
       (* this env in FuncEntry is the one that we need in order to create the struct later when the function is called 
        * it must be the same as the one we give to create_struct_callee  *)
       let env = insertST env name (FuncEntry (ft, env)) in 
       (func(*{func with stack_frames = FunctionsToFrames.add name frame_ptr func.stack_frames}*), env)
 
   | F_decl h -> (* this should be used for function definitions as well*)
-      (*let (name, var_names, pointer_types, ft) = codegen_fhead llvm None  h in
-       let f =  this has some role but I have not looked into it
-        match lookup_function name llvm.md with 
-        | None -> declare_function name ft llvm.md (* !!! here what happens when a function is redefined locally?*)
+      let name, _, _, ft = codegen_fhead llvm true h in
+      let f = 
+        match lookup_function name llvm.md with (* search for function "name" in the ctx *)
+        | None -> declare_function name ft llvm.md (*here what happens when a function is redefined locally?*)
         | Some f ->
             if Array.length (basic_blocks f) = 0 then () else
               raise (Failure "redefinition of function");
             if Array.length (params f) = Array.length (param_types ft) then () else
               raise (Failure "redefinition of function with different # args");
-            f 
-      in *)
-      (* insertST env name (f, None) *)
+            f in
+      let env = insertST env name (FuncEntry (ft, env)) in (* here some thinking is needed*)
       (func, env)
   | V_def (vars, t) -> 
       position_at_end entryBB llvm.bd;

@@ -1,0 +1,20 @@
+fun main () : nothing
+  var a : int;
+
+  fun test (a : char) : nothing
+    $var a : char;
+  {
+    $a <- 'r';
+    writeChar(a);
+    writeChar('\n');
+  }
+
+  fun test2 () : int
+  {
+    test('y');
+  }
+{
+  a <- 65;
+  writeInteger(a);
+  test2();
+}
