@@ -528,7 +528,7 @@ and codegen_localdef llvm entryBB (func, env) local = (*entryBB is the function'
       (func, addVars llvm env vars (llty, dims))  (* isws anti na kalw thn addvars na mporei na ginei olo ayto me foldl*)
   | _ -> assert false
 
-let llvm_compile_and_dump asts =
+let llvm_compile_and_dump asts input_file opt_flag i_flag =
   (* Initialize LLVM: context, module, builder and FPM*)
   Llvm_all_backends.initialize ();
   let ctx = global_context () in
@@ -621,18 +621,24 @@ let llvm_compile_and_dump asts =
   } in
 
 
-  (* Emit the program code and add return value to main function *)
+  (* Emit the program code *)
   ignore (codegen_decl info None env asts);
-  (* ignore (build_ret (c32 0) builder); *)
 
-  (* Verify the entire module*)
-  (* Llvm_analysis.assert_valid_module md; *)
+  (* Verify the entire module*) (* when this is uncommented, arrays.grc won't compile *)
+  (* Llvm_analysis.assert_valid_module md;  *)
 
-  (* Optimize *) (* this must be optional *)
-  (* ignore (PassManager.run_module md fpm); *)
+  (* Optimize if requested *)
+  ignore (if opt_flag then PassManager.run_module md fpm else false); (* false is dummy here *)
 
   (* Print out the IR *)
-  print_module "llvm_ir.ll" md;; (* dump_module to print in stdout*)
+ (* if i_flag then
+    dump_module md
+  else 
+    print_module (input_file^".ll") md *)(* dump_module to print in stdout*)
+  if i_flag then
+    dump_module md
+  else 
+    print_module (input_file^".ll") md (* dump_module to print in stdout*)
 
 
 

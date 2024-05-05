@@ -3,6 +3,7 @@ open Symbol_tables
 
 exception TypeError of string
 
+let first_function = ref true 
 
 (* helper *)
 (* let bind_operator op =
@@ -47,7 +48,7 @@ let rec sem_expr env expr =
       (match (lookupST var env) with
       | IntEntry _               -> TY_int
       | CharEntry _              -> TY_char
-      | ArrayEntry (t, dims, _)    -> TY_array (t, dims) 
+      | ArrayEntry (t, dims, _)  -> TY_array (t, dims) 
       | _                       -> raise (TypeError "Expected var name but found function name as l-value"))
   | L_matrix (e1, e2)    -> 
       let t1 = sem_expr env e1 in
@@ -71,7 +72,7 @@ let rec sem_expr env expr =
         (* Printf.printf "%s\n" name;
         printST env; *)
         (match func with 
-        | FunEntry (t, params) -> if custom_checklist types params then t else raise (TypeError ("Wrong parameters were given to function "^name^" when called"))
+        | FunEntry (t, params) -> if custom_checklist types params then t else raise (TypeError ("Wrong parameters were given to function "^name^" when called (as expr)"))
         | _               -> raise (TypeError (name ^ " is a variable, not a function")))
     | _                  -> raise (Failure "1 Reached unreachable :("))
   | E_op1 (op, e)        -> 
@@ -163,6 +164,24 @@ let rec printer e =
   (* na mpei kanonas oti ta arrays pernoun mono by reference stis synarthseis*)
 
 
+let types_of_params params =
+  let open List in
+  map (fun x ->
+    match x with
+    | F_params (ref, the_params, ty) -> 
+        let _ =
+        match ref with (* here various other things should happen like having a type for pass by ref parameters... also check that these types are not void*)
+        | Some _  -> ()
+        | None    -> 
+            match ty with
+            | TY_array (_, _) -> raise (TypeError ("Array function parameter is not defined to be passed by ref"))
+            | _               -> () in
+        (List.map (fun _ -> ty) the_params)
+    | _ -> assert false
+  ) params
+  |> concat
+
+
 
 let rec sem_decl env decl =
   match decl with
@@ -173,28 +192,34 @@ let rec sem_decl env decl =
       | TY_array (t, dims) -> addVars env vars (ArrayEntry (t, dims, None))
       | _                  -> assert false)
   | F_head (name, params, t) -> 
-      (match params with (* check oti o typos epistrofhs den einai pinakas *)
-      | Some ps  -> let env = List.fold_left sem_decl env ps in
-                    let types = List.concat (
-                      List.map (fun x ->
-                        match x with
-                        | F_params (_, the_params, t) -> (List.map (fun _ -> t) the_params)
-                        | _ -> assert false
-                      ) ps) in
+      (match params with
+      | Some ps  -> ignore (if !first_function = true then
+                      raise (TypeError "Main function should not have parameters")
+                    else ());
+                    first_function := false;
+                    let env = List.fold_left sem_decl env ps in
+                    let types = types_of_params ps in
                     let _ =
                       match t with
                       | TY_array (_, _) -> raise (TypeError ("Function "^name^" is defined to return an array"))
                       | _               -> () in
                     insertST env name (FunEntry(t, types))
-      | None     -> insertST env name (FunEntry(t, [])))
+      | None     -> 
+          ignore (if !first_function = true then
+            match t with
+            | TY_none -> ()
+            | _       -> raise (TypeError "Main function should have type nothing")
+          else ());
+          first_function := false;
+          insertST env name (FunEntry(t, [])))
   | F_def (h, locals, block) -> 
-    let env = sem_decl env h in
-    let env = List.fold_left sem_localdef env locals in
-    if sem_stmt env block then env else raise (TypeError "aa") (*dummy error, look into this when using this in main.ml*)
+      let env = sem_decl env h in
+      let env = List.fold_left sem_localdef env locals in
+      if sem_stmt env block then env else raise (TypeError "aa") (*dummy error, look into this when using this in main.ml*)
   | F_decl head              -> 
       (match head with
       | F_head (name, params, t) -> (match params with
-                                    | Some ps  -> let types = paramsToTypes ps [] in
+                                    | Some ps  -> let types = types_of_params ps in
                                                   insertST env name (FunEntry(t, types))
                                     | None     -> insertST env name (FunEntry(t, [])))
       | _                        -> raise (Failure "11 Reached unreachable :("))
@@ -202,8 +227,11 @@ let rec sem_decl env decl =
       (match t with  (* prepei na kanw check gia duplicate variable! dyskolo...*)
       | TY_int             -> addVars env vars (IntEntry None)
       | TY_char            -> addVars env vars (CharEntry None)
-      | TY_array (t, dims) -> addVars env vars (ArrayEntry (t, dims, None))
-      | _                  -> raise (Failure "12 Reached unreachable :("))
+      | TY_array (t, dims) -> 
+          if List.for_all (fun x -> x > 0) dims then ()
+          else raise (TypeError "One or more vars are defined to have array type with size 0 or less");
+          addVars env vars (ArrayEntry (t, dims, None))
+      | _                  -> assert false)
 
 and sem_localdef env local =
   match local with
@@ -226,7 +254,7 @@ and sem_stmt env stmt =
       (* Printf.printf "%s" name; *)
       (* if name = "writeInteger" then printST env else [()]; *)
       (match func with (* na valw ena kalytero exception message gia to type error me onoma synarthshs ktl*)
-      | FunEntry (t, params) -> if custom_checklist types params then true else (*let _ = printST env in *)raise (TypeError "stmt Wrong parameters were given to function when called") 
+      | FunEntry (t, params) -> if custom_checklist types params then true else (*let _ = printST env in *)raise (TypeError "Wrong parameters were given to function when called (as stmt)") 
       | _                    -> raise (TypeError (name ^ " is a variable, not a function")))
   | S_colon _              -> true
   | S_assign (e1, e2)      -> 
@@ -234,7 +262,7 @@ and sem_stmt env stmt =
       let t2 = sem_expr env e2 in
       begin
         match t1, t2 with
-        | TY_array(_, _), TY_array(_, _) -> true
+        | TY_array(_, _), TY_array(_, _) -> raise (TypeError "Assigning an array to an array is not permitted (array could be a string..)")
         | TY_int, TY_int -> true
         | TY_char, TY_char -> true
         | _, _ -> raise (TypeError "left and right values of assignment do not type-match")
