@@ -530,18 +530,24 @@ and codegen_localdef llvm entryBB (func, env) local = (*entryBB is the function'
 
 let llvm_compile_and_dump asts input_file opt_flag i_flag =
   (* Initialize LLVM: context, module, builder and FPM*)
+  let open Llvm_scalar_opts in
   Llvm_all_backends.initialize ();
   let ctx = global_context () in
   let md = create_module ctx "grace program" in
   let builder = builder ctx in
   let fpm = PassManager.create () in
   List.iter (fun optim -> optim fpm) [
-    Llvm_scalar_opts.add_memory_to_register_promotion;
-    Llvm_scalar_opts.add_instruction_combination;
-    Llvm_scalar_opts.add_reassociation;
-    Llvm_scalar_opts.add_gvn;
-    Llvm_scalar_opts.add_cfg_simplification;
-  ]; (*maybe add some more??? *)
+    add_sccp; add_memory_to_register_promotion;
+    add_instruction_combination; add_cfg_simplification;
+    add_scalar_repl_aggregation;
+    add_early_cse; add_cfg_simplification; add_instruction_combination;
+    add_tail_call_elimination; add_reassociation; add_loop_rotation;
+    add_instruction_combination; add_cfg_simplification;
+    add_ind_var_simplification; add_loop_idiom; add_loop_deletion;
+    add_loop_unroll; add_gvn; add_memcpy_opt; add_sccp; add_licm;
+    add_aggressive_dce; add_cfg_simplification; add_instruction_combination;
+    add_dead_store_elimination; add_cfg_simplification
+  ];
   (* Initialize types *)
   let i1 = i1_type ctx in
   let i8 = i8_type ctx in

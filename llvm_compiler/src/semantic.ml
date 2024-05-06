@@ -69,10 +69,9 @@ let rec sem_expr env expr =
         let types = match ps with
                     | Some es -> List.map (sem_expr env) es
                     | None    -> [] in
-        (* Printf.printf "%s\n" name;
-        printST env; *)
+        print_string (name^"\n");
         (match func with 
-        | FunEntry (t, params) -> if custom_checklist types params then t else raise (TypeError ("Wrong parameters were given to function "^name^" when called (as expr)"))
+        | FunEntry (t, params) -> t (*if custom_checklist types params then t else raise (TypeError ("Wrong parameters were given to function "^name^" when called (as expr)"))*)
         | _               -> raise (TypeError (name ^ " is a variable, not a function")))
     | _                  -> raise (Failure "1 Reached unreachable :("))
   | E_op1 (op, e)        -> 

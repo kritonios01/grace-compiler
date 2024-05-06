@@ -1,2 +1,0 @@
-χρειαζονται τυποι για τα entries και θα μπαινουν σε ενα hash table
-entries -> vars, functions, params

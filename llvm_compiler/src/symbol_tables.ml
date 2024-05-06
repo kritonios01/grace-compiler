@@ -57,7 +57,23 @@ let find_new_values map1 map2 =
   SymbolTable.fold helper map1 emptyST
 
 
-
+let print_sem_entry x env =
+  let string_of_value v =
+    let rec string_of_typ s t =
+      match t with
+      | Ast.TY_int   -> s ^ "int "
+      | Ast.TY_char  -> s ^ "char "
+      | Ast.TY_none  -> s ^ "none "
+      | Ast.TY_array (ty,l) -> s ^ "TY_array(t:" ^ string_of_typ "" ty ^ ", dims:" ^ list_to_string (List.map string_of_int l) ^ ") " in
+    match v with
+    | IntEntry _ -> "IntEntry"
+    | CharEntry _ -> "CharEntry"
+    | ArrayEntry (t, l1, l2) -> "ArrayEntry(type:" ^ string_of_typ "" t ^ ", dims:" ^ list_to_string (List.map string_of_int l1) ^ ")"
+    | FunEntry (t, l)   -> "FunEntry(type:" ^ string_of_typ "" t ^ ", params:" ^ (List.fold_left string_of_typ "" l) ^ ")" in
+  let helper (k, v) = 
+    Printf.printf "%s -> %s\n" k (string_of_value v) in
+  let mapList = lookupST x env in
+  helper (x, mapList)
 
 (* helper for debugging *)
 let printST mapping =
