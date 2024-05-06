@@ -14,6 +14,7 @@ eval $(opam env --switch grcc_19604)
 ```
 ##### To compile the project:
 ```
+export GRC_LIB_PATH="..../grace-compiler/lib/lib.a"
 cd llvm_compiler
 dune build --profile release @install
 cp _build/default/src/main.exe ./grcc.exe

@@ -1,4 +1,5 @@
 let main =
+  let lib_dir = try Sys.getenv "GRC_LIB_PATH" with Not_found -> raise (Failure "Error: GRC_LIB_PATH environment variable was not specified!\n") in
   let usage_msg = "grcc [-f] [-i] [-O] <program.grc>" in
   let opt_flag = ref false in
   let f_flag = ref false in
@@ -15,6 +16,7 @@ let main =
     ]
   in 
   ignore (Arg.parse speclist set_input usage_msg);
+
 
   if !i_flag && !f_flag then
     (Printf.eprintf "Error: -i and -f flags cannot be both on!\n";
@@ -44,7 +46,7 @@ let main =
     if !f_flag then 
       ignore (Sys.command ("cat "^ filename ^".s"))
     else
-      ignore (Sys.command ("clang -no-pie "^ filename ^".s ../lib/lib.a -o "^ filename));
+      ignore (Sys.command ("clang -no-pie "^ filename ^".s "^lib_dir^  " -o "^ filename));
     exit 0
   with 
   | Parser.Error -> (* this is an error raised by the parser *)
