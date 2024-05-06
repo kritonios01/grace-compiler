@@ -37,14 +37,14 @@ let main =
     Printf.printf "Semantics OK!\n";
     let _ = Compiler.llvm_compile_and_dump asts filename !opt_flag !i_flag in
     Printf.printf "Compilation OK!\n";
-    
+
     if !i_flag then
       exit 0;
     let _ = Sys.command ("llc-16 "^ filename^".ll -o "^ filename ^ ".s") in
     if !f_flag then 
       ignore (Sys.command ("cat "^ filename ^".s"))
     else
-      ignore (Sys.command ("clang -no-pie "^ filename ^".s ../lib.a -o "^ filename));
+      ignore (Sys.command ("clang -no-pie "^ filename ^".s ../lib/lib.a -o "^ filename));
     exit 0
   with 
   | Parser.Error -> (* this is an error raised by the parser *)
