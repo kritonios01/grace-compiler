@@ -1,5 +1,5 @@
 let main =
-  let lib_dir = try Sys.getenv "GRC_LIB_PATH" with Not_found -> raise (Failure "Error: GRC_LIB_PATH environment variable was not specified!\n") in
+  let lib_dir = try Sys.getenv "GRC_LIB_PATH" with Not_found -> raise (Failure "GRC_LIB_PATH environment variable was not found!\n") in
   let usage_msg = "grcc [-f] [-i] [-O] <program.grc>" in
   let opt_flag = ref false in
   let f_flag = ref false in
@@ -38,15 +38,17 @@ let main =
     let _ = Semantic.sem_ast asts in
     Printf.printf "Semantics OK!\n";
     let _ = Compiler.llvm_compile_and_dump asts filename !opt_flag !i_flag in
-    Printf.printf "Compilation OK!\n";
 
     if !i_flag then
       exit 0;
-    let _ = Sys.command ("llc-16 "^ filename^".ll -o "^ filename ^ ".s") in
-    if !f_flag then 
+    let llc_rv = Sys.command ("llc-16 "^ filename^".ll -o "^ filename ^ ".s") in
+    if llc_rv <> 0 then
+      exit 1
+    else if !f_flag then 
       ignore (Sys.command ("cat "^ filename ^".s"))
     else
-      ignore (Sys.command ("clang -no-pie "^ filename ^".s "^lib_dir^  " -o "^ filename));
+        ignore (Sys.command ("clang -no-pie "^ filename ^".s "^ lib_dir ^" -o "^ filename));
+    Printf.printf "Compilation OK!\n";
     exit 0
   with 
   | Parser.Error -> (* this is an error raised by the parser *)

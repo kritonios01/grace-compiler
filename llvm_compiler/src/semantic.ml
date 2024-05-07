@@ -69,7 +69,6 @@ let rec sem_expr env expr =
         let types = match ps with
                     | Some es -> List.map (sem_expr env) es
                     | None    -> [] in
-        print_string (name^"\n");
         (match func with 
         | FunEntry (t, params) -> t (*if custom_checklist types params then t else raise (TypeError ("Wrong parameters were given to function "^name^" when called (as expr)"))*)
         | _               -> raise (TypeError (name ^ " is a variable, not a function")))
@@ -253,7 +252,7 @@ and sem_stmt env stmt =
       (* Printf.printf "%s" name; *)
       (* if name = "writeInteger" then printST env else [()]; *)
       (match func with (* na valw ena kalytero exception message gia to type error me onoma synarthshs ktl*)
-      | FunEntry (t, params) -> if custom_checklist types params then true else (*let _ = printST env in *)raise (TypeError "Wrong parameters were given to function when called (as stmt)") 
+      | FunEntry (t, params) -> true (*if custom_checklist types params then true else (*let _ = printST env in *)raise (TypeError "Wrong parameters were given to function when called (as stmt)") *)
       | _                    -> raise (TypeError (name ^ " is a variable, not a function")))
   | S_colon _              -> true
   | S_assign (e1, e2)      -> 

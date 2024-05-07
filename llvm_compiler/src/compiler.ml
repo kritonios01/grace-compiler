@@ -149,7 +149,7 @@ and handle_matrix llvm func env lvalue acc =
       (match codegen_expr llvm func env e2 with
       | BasicEntry (llv, ty) as be    -> handle_matrix llvm func env e1 (be::acc)
       | StackFrameEntry (_, _) as sfe -> handle_matrix llvm func env e1 (sfe::acc)
-      | _ as x -> print_llenv_entry x; assert false)
+      | _ -> assert false)
   | _ -> assert false
 
 
@@ -211,22 +211,55 @@ and codegen_expr llvm func env expr =
       | Op_mod   -> (BasicEntry ((build_srem lhs rhs "modtmp" llvm.bd), llvm.i64))
       | _        -> assert false
 
+(* returns the llvalue and the last basic block required for the phi node *)
 and codegen_cond llvm func env cond =
   match cond with
   | C_bool1 (op, c) ->
-      let rhs = codegen_cond llvm func env c in
+      let rhs, _ = codegen_cond llvm func env c in
       begin
         match op with
-        | Op_not -> build_xor rhs (llvm.c1 1) "negtmp" llvm.bd
+        | Op_not -> build_xor rhs (llvm.c1 1) "negtmp" llvm.bd, None
         | _      -> assert false
       end
   | C_bool2 (c1, op, c2) ->
-      let lhs = codegen_cond llvm func env c1 in
-      let rhs = codegen_cond llvm func env c2 in
+      let lhs, _ = codegen_cond llvm func env c1 in
+      (* let rhs = codegen_cond llvm func env c2 in *)
       begin
         match op with
-        | Op_and -> build_and lhs rhs "andtmp" llvm.bd
-        | Op_or  -> build_or lhs rhs "ortmp" llvm.bd
+        | Op_and -> (* build_and lhs rhs "andtmp" llvm.bd *)
+            let cur_function = insertion_block llvm.bd |> block_parent in
+            let c1_true_block = append_block llvm.ctx "eval_rest_AND" cur_function in
+            let c1_false_block = append_block llvm.ctx "false_dump" cur_function in
+            let end_block = append_block llvm.ctx "end_AND" cur_function in
+            let _ = build_cond_br lhs c1_true_block c1_false_block llvm.bd in
+
+            position_at_end c1_true_block llvm.bd;
+            let rhs, phi_pred = codegen_cond llvm func env c2 in
+            let _ = build_br end_block llvm.bd in
+
+            position_at_end c1_false_block llvm.bd;
+            let _ = build_br end_block llvm.bd in
+
+            position_at_end end_block llvm.bd;
+            build_phi [(llvm.c1 0, c1_false_block); (rhs, Option.value phi_pred ~default:c1_true_block)] "and_result" llvm.bd, Some end_block
+
+        | Op_or  -> (* build_or lhs rhs "ortmp" llvm.bd *)
+            let cur_function = insertion_block llvm.bd |> block_parent in
+            let c1_false_block = append_block llvm.ctx "eval_rest_OR" cur_function in
+            let c1_true_block = append_block llvm.ctx "true_dump" cur_function in
+            let end_block = append_block llvm.ctx "end_OR" cur_function in
+            let _ = build_cond_br lhs c1_true_block c1_false_block llvm.bd in
+
+            position_at_end c1_false_block llvm.bd;
+            let rhs, phi_pred = codegen_cond llvm func env c2 in
+            (* position_at_end c1_false_block llvm.bd; *)
+            let _ = build_br end_block llvm.bd in
+
+            position_at_end c1_true_block llvm.bd;
+            let _ = build_br end_block llvm.bd in
+
+            position_at_end end_block llvm.bd;
+            build_phi [(llvm.c1 1, c1_true_block); (rhs, Option.value phi_pred ~default:c1_false_block)] "or_result" llvm.bd, Some end_block
         | _      -> assert false
       end
   | C_expr (e1, op, e2) -> 
@@ -238,12 +271,12 @@ and codegen_cond llvm func env cond =
         |> codegen_llenv_entry llvm func false in
 
       match op with
-      | Op_eq          -> build_icmp Icmp.Eq lhs rhs "eqtmp" llvm.bd
-      | Op_hash        -> build_icmp Icmp.Ne lhs rhs "netmp" llvm.bd
-      | Op_less        -> build_icmp Icmp.Slt lhs rhs "sltmp" llvm.bd
-      | Op_lesseq      -> build_icmp Icmp.Sle lhs rhs "slemp" llvm.bd
-      | Op_greater     -> build_icmp Icmp.Sgt lhs rhs "sgtmp" llvm.bd
-      | Op_greatereq   -> build_icmp Icmp.Sge lhs rhs "sgemp" llvm.bd
+      | Op_eq          -> build_icmp Icmp.Eq lhs rhs "eqtmp" llvm.bd, None
+      | Op_hash        -> build_icmp Icmp.Ne lhs rhs "netmp" llvm.bd, None
+      | Op_less        -> build_icmp Icmp.Slt lhs rhs "sltmp" llvm.bd, None
+      | Op_lesseq      -> build_icmp Icmp.Sle lhs rhs "slemp" llvm.bd, None
+      | Op_greater     -> build_icmp Icmp.Sgt lhs rhs "sgtmp" llvm.bd, None
+      | Op_greatereq   -> build_icmp Icmp.Sge lhs rhs "sgemp" llvm.bd, None
       | _              -> assert false
 
 and codegen_stmt llvm func env stmt =
@@ -260,7 +293,7 @@ and codegen_stmt llvm func env stmt =
       ignore (build_store src dest llvm.bd)
   | S_block stmts -> List.iter (codegen_stmt llvm func env) stmts
   | S_if (c, s) ->
-      let cond = codegen_cond llvm func env c in
+      let cond, _ = codegen_cond llvm func env c in
       let start_bb = insertion_block llvm.bd in
       let cur_function = block_parent start_bb in
 
@@ -270,11 +303,17 @@ and codegen_stmt llvm func env stmt =
 
       position_at_end then_bb llvm.bd;
       codegen_stmt llvm func env s;
+      (* let _ =
+        match block_terminator then_bb with
+        | Some _ -> ()
+        | None   -> ignore (build_br after_bb llvm.bd) in *)
       let _ = build_br after_bb llvm.bd in
+
+      (* remove_wrong_terminators then_bb; *)
 
       position_at_end after_bb llvm.bd
   | S_ifelse (c, s1, s2) ->
-      let cond = codegen_cond llvm func env c in
+      let cond, _ = codegen_cond llvm func env c in
       let start_bb = insertion_block llvm.bd in
       let cur_function = block_parent start_bb in
 
@@ -285,13 +324,54 @@ and codegen_stmt llvm func env stmt =
 
       position_at_end then_bb llvm.bd;
       codegen_stmt llvm func env s1;
+      (* let merge_bb =
+        match block_terminator then_bb with
+        | Some _ -> None
+        | None   -> 
+            let merge_bb = append_block llvm.ctx "ifafter" cur_function in
+            ignore (build_br merge_bb llvm.bd);
+            Some merge_bb
+      in *)
+
+      (* let _ =
+        match block_terminator then_bb with
+        | Some _ -> ()
+        | None   -> 
+            ignore (build_br merge_bb llvm.bd)
+      in *)
       let _ = build_br merge_bb llvm.bd in 
       
       position_at_end else_bb llvm.bd;
       codegen_stmt llvm func env s2;
+      (* let merge_bb =
+        match block_terminator else_bb with
+        | Some _ -> None
+        | None   -> 
+            let merge_bb =
+              match merge_bb with
+              | Some x -> x
+              | None   -> append_block llvm.ctx "ifafter" cur_function in
+          
+            ignore (build_br merge_bb llvm.bd);
+            Some merge_bb
+          in *)
+
+          (* let _ =
+            match block_terminator else_bb with
+            | Some _ -> ()
+            | None   -> 
+                ignore (build_br merge_bb llvm.bd)
+          in *)
+
       let _ = build_br merge_bb llvm.bd in
 
-      position_at_end merge_bb llvm.bd;
+      (* remove_wrong_terminators then_bb; *)
+      (* remove_wrong_terminators else_bb; *)
+
+      (* (match merge_bb with
+      | None -> ()
+      | Some bb -> position_at_end bb llvm.bd;) *)
+      position_at_end merge_bb llvm.bd
   | S_while (c, s) ->
       let start_bb = insertion_block llvm.bd in
       let cur_function = block_parent start_bb in
@@ -302,12 +382,15 @@ and codegen_stmt llvm func env stmt =
       let _ = build_br cond_bb llvm.bd in
 
       position_at_end cond_bb llvm.bd;
-      let cond = codegen_cond llvm func env c in
+      let cond, _ = codegen_cond llvm func env c in
       let _ = build_cond_br cond loop_bb after_bb llvm.bd in
 
       position_at_end loop_bb llvm.bd;
       codegen_stmt llvm func env s;
       let _ = build_br cond_bb llvm.bd in
+
+      (* remove_wrong_terminators loop_bb; *)
+      (* remove_wrong_terminators after_bb; *)
 
       position_at_end after_bb llvm.bd;
   | S_return e ->
@@ -450,6 +533,10 @@ let rec codegen_decl llvm sframe env decl = (* old_env is the symboltable before
       (* body *)
       codegen_stmt llvm func_info local_env block;
 
+      (* this is to remove multiple block terminators in a single block. This can happen with while loops
+         and if-then/if-then-else statements. If we were to ommit this step, the module would not be valid
+         and thus optimizations could lead to undefined behaviour *)
+      iter_blocks remove_wrong_terminators f;
 
       let helper x = (* mia int synarthsh prepei na kanei return kati akoma kai an den yparxei to return mesa se ayth? den jerw an entopizetai (apo ton semantic analyzer) mia int synarthsh pou den exei kapoio return *)
         match block_terminator x with
@@ -467,7 +554,7 @@ let rec codegen_decl llvm sframe env decl = (* old_env is the symboltable before
       in iter_blocks helper f;
 
       
-      (* Llvm_analysis.assert_valid_function f; *)
+      Llvm_analysis.assert_valid_function f;
       (* env *)
 
 
@@ -631,7 +718,7 @@ let llvm_compile_and_dump asts input_file opt_flag i_flag =
   ignore (codegen_decl info None env asts);
 
   (* Verify the entire module*) (* when this is uncommented, arrays.grc won't compile *)
-  (* Llvm_analysis.assert_valid_module md;  *)
+  Llvm_analysis.assert_valid_module md; 
 
   (* Optimize if requested *)
   ignore (if opt_flag then PassManager.run_module md fpm else false); (* false is dummy here *)

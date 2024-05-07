@@ -40,7 +40,26 @@ type func_info = {
 
 
 
+let remove_wrong_terminators bb =
+  (* let x, y = instr_begin bb in
 
+  iter_instrs (fun instr ->
+    match classify_value instr with
+    | Ret | Br | IndirectBr -> 
+    ) *)
+
+  let open Llvm.Opcode in
+  ignore (fold_left_instrs (fun destroy instr ->
+    if destroy then
+      (delete_instruction instr; 
+      destroy)
+    else
+      match instr_opcode instr with
+      | Ret | Br | IndirectBr ->
+          true
+      | _ -> destroy
+
+  ) false bb)
 
 
 
