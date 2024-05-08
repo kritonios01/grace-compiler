@@ -10,7 +10,6 @@
 ##### Go to root of this repo and run:
 ```
 ./setup.sh
-
 ```
 ##### To compile the project:
 > Before you proceed make sure that the llvm compiler in your computer (*llc*) for LLVM 16 is named llc-16. If not, either create a symbolic link or go to llvm_compiler/src/main.ml at line 44 and adjust the command accordingly 

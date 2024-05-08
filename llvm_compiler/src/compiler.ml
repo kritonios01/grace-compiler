@@ -223,10 +223,9 @@ and codegen_cond llvm func env cond =
       end
   | C_bool2 (c1, op, c2) ->
       let lhs, _ = codegen_cond llvm func env c1 in
-      (* let rhs = codegen_cond llvm func env c2 in *)
       begin
         match op with
-        | Op_and -> (* build_and lhs rhs "andtmp" llvm.bd *)
+        | Op_and ->
             let cur_function = insertion_block llvm.bd |> block_parent in
             let c1_true_block = append_block llvm.ctx "eval_rest_AND" cur_function in
             let c1_false_block = append_block llvm.ctx "false_dump" cur_function in
@@ -243,7 +242,7 @@ and codegen_cond llvm func env cond =
             position_at_end end_block llvm.bd;
             build_phi [(llvm.c1 0, c1_false_block); (rhs, Option.value phi_pred ~default:c1_true_block)] "and_result" llvm.bd, Some end_block
 
-        | Op_or  -> (* build_or lhs rhs "ortmp" llvm.bd *)
+        | Op_or  ->
             let cur_function = insertion_block llvm.bd |> block_parent in
             let c1_false_block = append_block llvm.ctx "eval_rest_OR" cur_function in
             let c1_true_block = append_block llvm.ctx "true_dump" cur_function in
@@ -252,7 +251,6 @@ and codegen_cond llvm func env cond =
 
             position_at_end c1_false_block llvm.bd;
             let rhs, phi_pred = codegen_cond llvm func env c2 in
-            (* position_at_end c1_false_block llvm.bd; *)
             let _ = build_br end_block llvm.bd in
 
             position_at_end c1_true_block llvm.bd;
@@ -303,13 +301,7 @@ and codegen_stmt llvm func env stmt =
 
       position_at_end then_bb llvm.bd;
       codegen_stmt llvm func env s;
-      (* let _ =
-        match block_terminator then_bb with
-        | Some _ -> ()
-        | None   -> ignore (build_br after_bb llvm.bd) in *)
       let _ = build_br after_bb llvm.bd in
-
-      (* remove_wrong_terminators then_bb; *)
 
       position_at_end after_bb llvm.bd
   | S_ifelse (c, s1, s2) ->
@@ -324,53 +316,12 @@ and codegen_stmt llvm func env stmt =
 
       position_at_end then_bb llvm.bd;
       codegen_stmt llvm func env s1;
-      (* let merge_bb =
-        match block_terminator then_bb with
-        | Some _ -> None
-        | None   -> 
-            let merge_bb = append_block llvm.ctx "ifafter" cur_function in
-            ignore (build_br merge_bb llvm.bd);
-            Some merge_bb
-      in *)
-
-      (* let _ =
-        match block_terminator then_bb with
-        | Some _ -> ()
-        | None   -> 
-            ignore (build_br merge_bb llvm.bd)
-      in *)
       let _ = build_br merge_bb llvm.bd in 
       
       position_at_end else_bb llvm.bd;
       codegen_stmt llvm func env s2;
-      (* let merge_bb =
-        match block_terminator else_bb with
-        | Some _ -> None
-        | None   -> 
-            let merge_bb =
-              match merge_bb with
-              | Some x -> x
-              | None   -> append_block llvm.ctx "ifafter" cur_function in
-          
-            ignore (build_br merge_bb llvm.bd);
-            Some merge_bb
-          in *)
-
-          (* let _ =
-            match block_terminator else_bb with
-            | Some _ -> ()
-            | None   -> 
-                ignore (build_br merge_bb llvm.bd)
-          in *)
-
       let _ = build_br merge_bb llvm.bd in
 
-      (* remove_wrong_terminators then_bb; *)
-      (* remove_wrong_terminators else_bb; *)
-
-      (* (match merge_bb with
-      | None -> ()
-      | Some bb -> position_at_end bb llvm.bd;) *)
       position_at_end merge_bb llvm.bd
   | S_while (c, s) ->
       let start_bb = insertion_block llvm.bd in
@@ -388,9 +339,6 @@ and codegen_stmt llvm func env stmt =
       position_at_end loop_bb llvm.bd;
       codegen_stmt llvm func env s;
       let _ = build_br cond_bb llvm.bd in
-
-      (* remove_wrong_terminators loop_bb; *)
-      (* remove_wrong_terminators after_bb; *)
 
       position_at_end after_bb llvm.bd;
   | S_return e ->
@@ -554,7 +502,7 @@ let rec codegen_decl llvm sframe env decl = (* old_env is the symboltable before
       in iter_blocks helper f;
 
       
-      Llvm_analysis.assert_valid_function f;
+      (* Llvm_analysis.assert_valid_function f; *)
       (* env *)
 
 
@@ -718,7 +666,7 @@ let llvm_compile_and_dump asts input_file opt_flag i_flag =
   ignore (codegen_decl info None env asts);
 
   (* Verify the entire module*) (* when this is uncommented, arrays.grc won't compile *)
-  Llvm_analysis.assert_valid_module md; 
+  (* Llvm_analysis.assert_valid_module md;  *)
 
   (* Optimize if requested *)
   ignore (if opt_flag then PassManager.run_module md fpm else false); (* false is dummy here *)

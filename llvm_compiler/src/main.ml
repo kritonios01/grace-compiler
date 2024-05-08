@@ -36,7 +36,7 @@ let main =
     Printf.printf "%d lines read.\n" !Lexer.num_lines;
     Printf.printf "Syntax OK!\n";
     let _ = Semantic.sem_ast asts in
-    Printf.printf "Semantics OK!\n";
+    (* Printf.printf "Semantics OK!\n"; *)
     let _ = Compiler.llvm_compile_and_dump asts filename !opt_flag !i_flag in
 
     if !i_flag then
