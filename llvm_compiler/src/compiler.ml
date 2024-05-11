@@ -277,7 +277,7 @@ and codegen_cond llvm func env cond =
       | Op_greatereq   -> build_icmp Icmp.Sge lhs rhs "sgemp" llvm.bd, None
       | _              -> assert false
 
-and codegen_stmt llvm func env stmt =
+and codegen_stmt llvm func first_func env stmt =
   match stmt with
   | S_fcall (name, exprs) as fcall -> let _ = create_fcall llvm func env fcall in ()
   | S_colon _ -> ()
@@ -289,7 +289,7 @@ and codegen_stmt llvm func env stmt =
         codegen_expr llvm func env e2
         |> codegen_llenv_entry llvm func false in
       ignore (build_store src dest llvm.bd)
-  | S_block stmts -> List.iter (codegen_stmt llvm func env) stmts
+  | S_block stmts -> List.iter (codegen_stmt llvm func first_func env) stmts
   | S_if (c, s) ->
       let cond, _ = codegen_cond llvm func env c in
       let start_bb = insertion_block llvm.bd in
@@ -300,7 +300,7 @@ and codegen_stmt llvm func env stmt =
       let _ = build_cond_br cond then_bb after_bb llvm.bd in
 
       position_at_end then_bb llvm.bd;
-      codegen_stmt llvm func env s;
+      codegen_stmt llvm func first_func env s;
       let _ = build_br after_bb llvm.bd in
 
       position_at_end after_bb llvm.bd
@@ -315,11 +315,11 @@ and codegen_stmt llvm func env stmt =
       let _ = build_cond_br cond then_bb else_bb llvm.bd in
 
       position_at_end then_bb llvm.bd;
-      codegen_stmt llvm func env s1;
+      codegen_stmt llvm func first_func env s1;
       let _ = build_br merge_bb llvm.bd in 
       
       position_at_end else_bb llvm.bd;
-      codegen_stmt llvm func env s2;
+      codegen_stmt llvm func first_func env s2;
       let _ = build_br merge_bb llvm.bd in
 
       position_at_end merge_bb llvm.bd
@@ -337,7 +337,7 @@ and codegen_stmt llvm func env stmt =
       let _ = build_cond_br cond loop_bb after_bb llvm.bd in
 
       position_at_end loop_bb llvm.bd;
-      codegen_stmt llvm func env s;
+      codegen_stmt llvm func first_func env s;
       let _ = build_br cond_bb llvm.bd in
 
       position_at_end after_bb llvm.bd;
@@ -348,7 +348,9 @@ and codegen_stmt llvm func env stmt =
             codegen_expr llvm func env expr (* edw to codegen_xpr prepei na gyrnaei mono BasicEntry*)
             |> codegen_llenv_entry llvm func false
           in ignore (build_ret n llvm.bd)
-      | None -> ignore (build_ret_void llvm.bd)
+      | None -> 
+          if first_func then ignore (build_ret (llvm.c64 0) llvm.bd)
+          else ignore (build_ret_void llvm.bd)
 
 
 let params_to_names_and_lltypes llvm fparams =
@@ -370,10 +372,10 @@ let params_to_names_and_lltypes llvm fparams =
       List.(rev names |> concat, lltypes |> concat)
 
 (* sframe is None only for the main function. In all other cases including when there are no local-vars etc, a stackframe is created *)
-let codegen_fhead llvm sframe head = (* ayto kalo einai na ginei merge me to codegen_decl *)
+let codegen_fhead llvm first_func sframe head = (* ayto kalo einai na ginei merge me to codegen_decl *)
   match head with
   | F_head (name, params, t) ->
-      let frt, _ = type_to_lltype llvm t in
+      let frt, _ = type_to_lltype llvm (if first_func then Ast.TY_int else t) in
       let var_names, fparams =
         match params with
         | Some ps -> params_to_names_and_lltypes llvm ps (* fparams_to_llarray returns list, not array :) *)
@@ -406,13 +408,15 @@ let rec codegen_decl llvm sframe env decl = (* old_env is the symboltable before
         | Some _ -> true
         | None   -> false in
 
+      let llv_first_func = !first_function in
+
       let (name, var_names, (dims, pointer_types), ft) = 
         if !first_function = true then (
-          let (_, param_names, (dims, pointer_types), ft) = codegen_fhead llvm sframe_bool h in
+          let (_, param_names, (dims, pointer_types), ft) = codegen_fhead llvm true sframe_bool h in
           first_function := false;
           ("main", param_names, (dims, pointer_types), ft))
         else
-          codegen_fhead llvm sframe_bool h
+          codegen_fhead llvm false sframe_bool h
       in
       
       let f = 
@@ -479,7 +483,7 @@ let rec codegen_decl llvm sframe env decl = (* old_env is the symboltable before
       
       position_at_end bb llvm.bd;
       (* body *)
-      codegen_stmt llvm func_info local_env block;
+      codegen_stmt llvm func_info llv_first_func local_env block;
 
       (* this is to remove multiple block terminators in a single block. This can happen with while loops
          and if-then/if-then-else statements. If we were to ommit this step, the module would not be valid
@@ -490,15 +494,18 @@ let rec codegen_decl llvm sframe env decl = (* old_env is the symboltable before
         match block_terminator x with
         | Some _ -> ()
         | None   -> 
-            let frt = return_type ft in
-            match classify_type frt with
-            | Void -> ignore (build_ret_void llvm.bd)
-            | Integer ->
-                if integer_bitwidth frt == 64 then
-                  ignore (build_ret (llvm.c64 0) llvm.bd)
-                else
-                  ignore (build_ret (llvm.c8 0) llvm.bd)
-            | _ -> assert false
+            (* if llv_first_func then
+              ignore (build_ret (llvm.c64 0) llvm.bd)
+            else *)
+              let frt = return_type ft in
+              match classify_type frt with
+              | Void -> ignore (build_ret_void llvm.bd)
+              | Integer ->
+                  if integer_bitwidth frt == 64 then
+                    ignore (build_ret (llvm.c64 0) llvm.bd)
+                  else
+                    ignore (build_ret (llvm.c8 0) llvm.bd)
+              | _ -> assert false
       in iter_blocks helper f;
 
       
@@ -536,7 +543,7 @@ and codegen_localdef llvm entryBB (func, env) local = (*entryBB is the function'
       
 
       let frame_ty, newST = create_struct_type llvm env name in (* we need this ST so that the functions know where to find these variables*)
-      let _, _, _, ft = codegen_fhead llvm true h in
+      let _, _, _, ft = codegen_fhead llvm false true h in
       let _ = codegen_decl llvm (Some frame_ty) newST fdef in 
       (* this env in FuncEntry is the one that we need in order to create the struct later when the function is called 
        * it must be the same as the one we give to create_struct_callee  *)
@@ -544,7 +551,7 @@ and codegen_localdef llvm entryBB (func, env) local = (*entryBB is the function'
       (func(*{func with stack_frames = FunctionsToFrames.add name frame_ptr func.stack_frames}*), env)
 
   | F_decl h -> (* this should be used for function definitions as well*)
-      let name, _, _, ft = codegen_fhead llvm true h in
+      let name, _, _, ft = codegen_fhead llvm false true h in
       let f = 
         match lookup_function name llvm.md with (* search for function "name" in the ctx *)
         | None -> declare_function name ft llvm.md (*here what happens when a function is redefined locally?*)
