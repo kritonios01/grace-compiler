@@ -54,9 +54,7 @@ let main =
   let lexbuf = Lexing.from_channel ic in
   try
     let asts = Parser.program Lexer.lexer lexbuf in
-    (* Printf.printf "%d lines read.\n" !Lexer.num_lines; *)
     print_message "lines read.\n" (Some !Lexer.num_lines);
-    (* Printf.printf "Syntax OK!\n"; *)
     print_message "Syntax OK!\n" None;
     let _ = Semantic.sem_ast asts in
     (* Printf.printf "Semantics OK!\n"; *)
@@ -66,13 +64,13 @@ let main =
       exit 0;
     let llc_rv = Sys.command ("llc-16 "^ filename^".ll -o "^ filename ^ ".s") in
     if llc_rv <> 0 then
-      exit 1
+      (check_and_delete (filename^".ll");
+      exit 1)
     else if !f_flag then 
       ignore (Sys.command ("cat "^ filename ^".s"))
     else
       let out = if !o_flag <> "" then !o_flag else "a.out" in
       ignore (Sys.command ("clang -no-pie "^ filename ^".s "^ lib_dir ^" -o "^out));
-    (* Printf.printf "Compilation OK!\n"; *)
     print_message "Compilation OK!\n" None;
     List.iter check_and_delete [filename^".ll"; filename^".s"];
     exit 0
