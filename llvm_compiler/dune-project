@@ -15,7 +15,11 @@
  (name llvm_compiler)
  (synopsis "Grace Compiler")
  (description "")
- (depends ocaml dune)
+ (depends 
+   (ocaml (<= 4.12))
+   (dune (>= 3))
+   (llvm (= 16.0.6))
+ )
 )
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project

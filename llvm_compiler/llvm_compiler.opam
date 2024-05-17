@@ -6,8 +6,9 @@ authors: ["Kriton Iordanidis"]
 homepage: "https://github.com/kritonios01/grace-compiler"
 bug-reports: "https://github.com/kritonios01/grace-compiler/issues"
 depends: [
-  "ocaml"
-  "dune" {>= "3.10"}
+  "ocaml" {<= "4.12"}
+  "dune" {>= "3.10" & >= "3"}
+  "llvm" {= "16.0.6"}
   "odoc" {with-doc}
 ]
 build: [
