@@ -23,6 +23,7 @@
 (executable
 	(name main)
 	(public_name main)
+	(ocamlopt_flags -O3)
 	(libraries 
 			semantic 
 			ast 
